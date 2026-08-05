@@ -1,0 +1,37 @@
+# IDA Case Study – possible dependencies
+# Install: pip install -r requirements.txt
+# Notebooks should also run under a current Anaconda setup
+
+# Data & analysis
+numpy
+pandas
+pyarrow
+scipy
+statsmodels
+scikit-learn
+
+# File formats
+openpyxl
+xlrd
+pyyaml
+
+# Visualization
+matplotlib
+seaborn
+plotly
+
+# Web app (submission: Dash and/or Streamlit)
+streamlit
+dash
+flask
+
+# Notebooks
+jupyter
+ipykernel
+nbformat
+nbconvert
+
+# Helpers
+tqdm
+python-dotenv
+requests
