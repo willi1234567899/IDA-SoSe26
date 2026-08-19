@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import base64
 import warnings
 from pathlib import Path
 
@@ -11,572 +12,388 @@ warnings.filterwarnings("ignore")
 
 ROOT = Path(__file__).resolve().parent
 DATA_PATH = ROOT / "Data" / "SoSe26_Case_Study_finalData_Group_38.csv"
-CSS_PATH = ROOT / "www" / "styles.css"
-LOGO_PATH = ROOT / "www" / "logo.svg"
+LOGO_PATH = ROOT / "www" / "img" / "logo.svg"
+CSS_PATH = ROOT / "www" / "style.css"
+FONT_REGULAR = ROOT / "www" / "fonts" / "source-sans-3-latin-400-normal.woff2"
+FONT_SEMIBOLD = ROOT / "www" / "fonts" / "source-sans-3-latin-600-normal.woff2"
 
-K_COLS = [f"K{i}" for i in range(1, 8)]
-REQUIRED_COLS = ["year", *K_COLS]
-BLUE = "#7eb6d4"
-BLUE_DARK = "#3d7ea3"
-
-EMPTY_RECOMMENDATION = pd.DataFrame(
-    {
-        "Category": K_COLS,
-        "Leading component": ["—"] * 7,
-        "Registrations": ["—"] * 7,
-        "Share (%)": ["—"] * 7,
-    }
+PLOTLY_BLUES = ["#2F5F7A", "#5BA4CF", "#8FCBE8", "#C5E4F3"]
+CATEGORIES = ["K1", "K2", "K3", "K4", "K5", "K6", "K7"]
+BODY_CATEGORIES = ["K4", "K5", "K6", "K7"]
+REQUIRED_COLS = [
+    "year",
+    "oem",
+    "vehicle_type",
+    "category",
+    "component_type",
+    "n_registrations",
+    "label",
+]
+EMPTY_WINNERS = pd.DataFrame(
+    columns=["category", "component_type", "label", "n_registrations"]
 )
-EMPTY_YEARLY_LEADERS = pd.DataFrame(
-    columns=["Year", "Leading component", "Registrations"]
-)
-EMPTY_FINAL_DATA = pd.DataFrame(
-    columns=["year", *K_COLS, "registrations", "ort", "plz", "lat", "lon"]
-)
-
-PLOTLY_LAYOUT = dict(
-    font=dict(family="Source Sans 3, Source Sans Pro, sans-serif", size=13, color="#1a1a1a"),
-    paper_bgcolor="#ffffff",
-    plot_bgcolor="#ffffff",
-    colorway=[BLUE_DARK, BLUE, "#a8d0e4", "#5a9fbf", "#c5e2ef"],
-    margin=dict(l=64, r=24, t=56, b=48),
-    legend=dict(orientation="h", yanchor="bottom", y=1.02, x=0, font=dict(color="#1a1a1a")),
-    title=dict(font=dict(size=15, color="#1a1a1a")),
-    xaxis=dict(
-        title_font=dict(color="#1a1a1a"),
-        tickfont=dict(color="#1a1a1a"),
-        gridcolor="#eeeeee",
-        zeroline=False,
-    ),
-    yaxis=dict(
-        title_font=dict(color="#1a1a1a"),
-        tickfont=dict(color="#1a1a1a"),
-        gridcolor="#eeeeee",
-        zeroline=False,
-        automargin=True,
-    ),
-)
+EMPTY_FINAL = pd.DataFrame(columns=REQUIRED_COLS)
 
 
-def inject_styles() -> None:
-    if CSS_PATH.is_file():
-        css = CSS_PATH.read_text(encoding="utf-8")
-        st.markdown(f"<style>{css}</style>", unsafe_allow_html=True)
+def _font_face(path: Path, weight: int) -> str:
+    if not path.exists():
+        return ""
+    payload = base64.b64encode(path.read_bytes()).decode("ascii")
+    return (
+        "@font-face {"
+        'font-family: "Source Sans Pro";'
+        "font-style: normal;"
+        f"font-weight: {weight};"
+        f"src: url(data:font/woff2;base64,{payload}) format('woff2');"
+        "}"
+    )
 
 
-@st.cache_data(show_spinner=False)
-def load_final_data(path_str: str) -> pd.DataFrame:
+def apply_design() -> None:
+    font_css = _font_face(FONT_REGULAR, 400) + _font_face(FONT_SEMIBOLD, 600)
+    extra = CSS_PATH.read_text(encoding="utf-8") if CSS_PATH.is_file() else ""
+    st.markdown(
+        f"<style>{font_css}{extra}</style>",
+        unsafe_allow_html=True,
+    )
+
+
+def load_final_data() -> pd.DataFrame | None:
+    if not DATA_PATH.is_file():
+        return None
     try:
-        df = pd.read_csv(path_str, encoding="utf-8")
+        df = pd.read_csv(DATA_PATH, encoding="utf-8")
     except UnicodeDecodeError:
-        df = pd.read_csv(path_str, encoding="utf-8-sig")
-
+        df = pd.read_csv(DATA_PATH, encoding="utf-8-sig")
     df.columns = df.columns.astype(str).str.strip()
     missing = [c for c in REQUIRED_COLS if c not in df.columns]
     if missing:
         raise ValueError(
-            "Final CSV is missing required columns: "
-            + ", ".join(missing)
-            + ". See doc/final-data-contract.md."
+            "Final CSV is missing required columns: " + ", ".join(missing)
         )
-
     out = df.copy()
     out["year"] = pd.to_numeric(out["year"], errors="coerce")
-
-    for col in K_COLS:
-        out[col] = (
-            out[col]
-            .astype("string")
-            .str.strip()
-            .replace({"": pd.NA, "nan": pd.NA, "None": pd.NA, "<NA>": pd.NA})
-        )
-
-    if "registrations" in out.columns:
-        out["registrations"] = (
-            pd.to_numeric(out["registrations"], errors="coerce").fillna(1).clip(lower=1)
-        )
-    else:
-        out["registrations"] = 1.0
-    out["registrations"] = out["registrations"].astype(float)
-
-    if "ort" in out.columns:
-        out["ort"] = (
-            out["ort"]
-            .astype("string")
-            .str.strip()
-            .replace({"": pd.NA, "nan": pd.NA, "None": pd.NA})
-        )
-
-    for geo in ("lat", "lon"):
-        if geo in out.columns:
-            out[geo] = pd.to_numeric(out[geo], errors="coerce")
-
-    out = out.dropna(subset=["year"])
+    out["n_registrations"] = pd.to_numeric(out["n_registrations"], errors="coerce")
+    for col in ("oem", "vehicle_type", "category", "component_type", "label"):
+        out[col] = out[col].astype("string").str.strip()
+    out = out.dropna(subset=["year", "n_registrations", "category", "component_type"])
     if out.empty:
-        raise ValueError(
-            "Final CSV has no usable rows after parsing `year`. "
-            "Check that year values are numeric."
-        )
-
+        raise ValueError("Final CSV has no usable rows after parsing.")
     out["year"] = out["year"].astype(int)
+    out["n_registrations"] = out["n_registrations"].astype(int)
     return out
 
 
-def weighted_mode(series: pd.Series, weights: pd.Series) -> tuple[str, float]:
-    tmp = pd.DataFrame({"v": series, "w": weights}).dropna(subset=["v"])
-    if tmp.empty:
-        return "—", 0.0
-    ranked = (
-        tmp.groupby("v", as_index=False)["w"]
+def overall_counts(df: pd.DataFrame) -> pd.DataFrame:
+    return (
+        df.groupby(["category", "component_type", "label"], as_index=False)[
+            "n_registrations"
+        ]
         .sum()
-        .sort_values(["w", "v"], ascending=[False, True])
+        .sort_values(["category", "n_registrations"], ascending=[True, False])
     )
-    top = ranked.iloc[0]
-    return str(top["v"]), float(top["w"])
 
 
-def recommend_vehicle(df: pd.DataFrame) -> pd.DataFrame:
-    total = float(df["registrations"].sum())
+def winners_by_category(overall: pd.DataFrame) -> pd.DataFrame:
     rows = []
-    for col in K_COLS:
-        value, weight = weighted_mode(df[col], df["registrations"])
-        share = (weight / total * 100.0) if total > 0 else 0.0
+    for cat in CATEGORIES:
+        sub = overall[overall["category"] == cat]
+        if sub.empty:
+            continue
+        top_n = sub["n_registrations"].max()
+        rows.append(sub[sub["n_registrations"] == top_n])
+    if not rows:
+        return EMPTY_WINNERS.copy()
+    return pd.concat(rows, ignore_index=True)
+
+
+def style_fig(fig):
+    fig.update_layout(
+        font_family="Source Sans Pro",
+        plot_bgcolor="white",
+        paper_bgcolor="white",
+        legend_title_text="",
+        font_color="#1f2d3a",
+        title_font_color="#1f2d3a",
+    )
+    fig.update_xaxes(title_font_color="#1f2d3a", tickfont_color="#1f2d3a", gridcolor="#eeeeee")
+    fig.update_yaxes(title_font_color="#1f2d3a", tickfont_color="#1f2d3a", gridcolor="#eeeeee")
+    return fig
+
+
+def plot_category_bars(overall: pd.DataFrame, category: str):
+    sub = overall[overall["category"] == category]
+    fig = px.bar(
+        sub,
+        x="component_type",
+        y="n_registrations",
+        color="label",
+        title=f"Registered vehicles by component type - {category}",
+        labels={
+            "component_type": "Component type",
+            "n_registrations": "Registered vehicles",
+            "label": "Description",
+        },
+        color_discrete_sequence=PLOTLY_BLUES,
+    )
+    return style_fig(fig)
+
+
+def plot_body_bars(overall: pd.DataFrame):
+    body = overall[overall["category"].isin(BODY_CATEGORIES)]
+    fig = px.bar(
+        body,
+        x="component_type",
+        y="n_registrations",
+        color="label",
+        title="Registered vehicles by body type (K4–K7)",
+        labels={
+            "component_type": "Body type",
+            "n_registrations": "Registered vehicles",
+            "label": "Description",
+        },
+        color_discrete_sequence=PLOTLY_BLUES,
+    )
+    return style_fig(fig)
+
+
+def plot_trends(df: pd.DataFrame, category: str):
+    yearly = (
+        df[df["category"] == category]
+        .groupby(["year", "component_type", "label"], as_index=False)["n_registrations"]
+        .sum()
+    )
+    fig = px.line(
+        yearly,
+        x="year",
+        y="n_registrations",
+        color="component_type",
+        markers=True,
+        title=f"Yearly registrations - {category}",
+        labels={
+            "year": "Registration year",
+            "n_registrations": "Registered vehicles",
+            "component_type": "Component type",
+        },
+        color_discrete_sequence=PLOTLY_BLUES,
+    )
+    fig.update_layout(xaxis=dict(dtick=1))
+    return style_fig(fig)
+
+
+def recommendation_frame(df: pd.DataFrame | None) -> pd.DataFrame:
+    rows = []
+    winners = EMPTY_WINNERS
+    if df is not None:
+        winners = winners_by_category(overall_counts(df))
+    for cat in CATEGORIES:
+        sub = winners[winners["category"] == cat] if len(winners) else winners
+        if sub is None or sub.empty:
+            rows.append(
+                {
+                    "Category": cat,
+                    "Component type": "-",
+                    "Description": "-",
+                    "Registered vehicles": "-",
+                }
+            )
+            continue
         rows.append(
             {
-                "category": col,
-                "component": value,
-                "registrations": int(weight),
-                "share_pct": round(share, 1),
+                "Category": cat,
+                "Component type": " / ".join(sub["component_type"].tolist()),
+                "Description": " / ".join(sub["label"].astype(str).tolist()),
+                "Registered vehicles": f"{int(sub['n_registrations'].iloc[0]):,}",
             }
         )
     return pd.DataFrame(rows)
 
 
-def count_exact_configuration(df: pd.DataFrame, rec: pd.DataFrame) -> int:
-    mask = pd.Series(True, index=df.index)
-    for row in rec.itertuples():
-        if row.component == "—":
-            return 0
-        mask &= df[row.category] == row.component
-    return int(df.loc[mask, "registrations"].sum())
-
-
-def category_year_counts(df: pd.DataFrame, category: str) -> pd.DataFrame:
-    tmp = df.dropna(subset=[category])
-    if tmp.empty:
-        return pd.DataFrame(columns=["year", "component", "count"])
-    return (
-        tmp.groupby(["year", category], as_index=False)["registrations"]
-        .sum()
-        .rename(columns={category: "component", "registrations": "count"})
-    )
-
-
-def yearly_leaders(df: pd.DataFrame, category: str) -> pd.DataFrame:
-    counts = category_year_counts(df, category)
-    if counts.empty:
-        return pd.DataFrame(columns=["year", "component", "count"])
-    idx = counts.groupby("year")["count"].idxmax()
-    return counts.loc[idx].sort_values("year").reset_index(drop=True)
-
-
 def render_header() -> None:
-    c1, c2 = st.columns([0.55, 5.45])
-    with c1:
+    header_l, header_r = st.columns([1.1, 4.9])
+    with header_l:
         if LOGO_PATH.is_file():
-            st.image(str(LOGO_PATH), width=40)
-    with c2:
+            svg = LOGO_PATH.read_text(encoding="utf-8")
+            st.markdown(f'<div class="ida-logo">{svg}</div>', unsafe_allow_html=True)
+    with header_r:
         st.markdown(
             """
-            <div class="site-header" style="border:0;margin:0;padding:0.15rem 0 0 0;">
-              <div>
-                <h1>Most popular vehicle</h1>
-                <p>Group 38 · Case Study result for management (components K1–K7)</p>
-              </div>
+            <div class="ida-hero">
+              <h1>Most popular vehicle</h1>
+              <p>Component recommendation from KBA registrations.
+              Counts are by <b>component type</b> (e.g. K1BE1), not plant or serial number.</p>
             </div>
             """,
             unsafe_allow_html=True,
         )
-    st.markdown(
-        '<hr style="border:none;border-top:2px solid #7eb6d4;margin:0.35rem 0 1.25rem 0;" />',
-        unsafe_allow_html=True,
+
+
+def tab_recommendation(df: pd.DataFrame | None) -> None:
+    st.subheader("Recommended component types (K1-K7)")
+    st.caption(
+        "Winner in each category = type with the most registered vehicles "
+        "over the full period. Equal counts are shown as a joint win."
     )
-
-
-def show_chart(fig) -> None:
-    fig.update_layout(**PLOTLY_LAYOUT)
-    st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
-
-
-def empty_bar_chart() -> None:
-    fig = px.bar(
-        pd.DataFrame({"category": K_COLS, "registrations": [None] * 7}),
-        x="category",
-        y="registrations",
-        labels={"registrations": "Registrations", "category": "Category"},
-        title="Leading component per category (K1–K7)",
-        category_orders={"category": K_COLS},
-    )
-    fig.update_traces(marker_color=BLUE_DARK)
-    fig.update_yaxes(range=[0, 1], automargin=True)
-    fig.update_layout(margin=dict(l=64, r=24, t=64, b=48), height=380)
-    show_chart(fig)
-
-
-def empty_line_chart() -> None:
-    fig = px.line(
-        pd.DataFrame({"year": pd.Series(dtype=int), "count": pd.Series(dtype=float), "component": pd.Series(dtype=str)}),
-        x="year",
-        y="count",
-        color="component",
-        labels={"count": "Registrations", "year": "Year", "component": "Component"},
-        title="Yearly registrations by component",
-    )
-    fig.update_layout(height=380)
-    show_chart(fig)
-
-
-def tab_result(df: pd.DataFrame | None) -> None:
-    st.subheader("4.1 Overall recommendation")
-    st.write(
-        "Case-study question: Which vehicle configuration is most popular? "
-        "For each category **K1–K7**, take the component with the "
-        "**highest registration weight** in the final dataset. "
-        "Those seven leaders form the recommended vehicle."
-    )
+    rec = recommendation_frame(df)
+    st.dataframe(rec, use_container_width=True, hide_index=True, height=308)
 
     if df is None:
-        m1, m2, m3, m4 = st.columns(4)
-        m1.metric("Registrations analysed", "—")
-        m2.metric("Period", "—")
-        m3.metric("Exact config matches", "—")
-        m4.metric("Registration places", "—")
-
-        st.write("**Recommended most popular vehicle (K1–K7 leaders)**")
-        st.dataframe(EMPTY_RECOMMENDATION, use_container_width=True, hide_index=True)
-        empty_bar_chart()
         return
 
-    rec = recommend_vehicle(df)
-    total = int(df["registrations"].sum())
-    years = f"{int(df['year'].min())}–{int(df['year'].max())}"
-    exact = count_exact_configuration(df, rec)
-
-    m1, m2, m3, m4 = st.columns(4)
-    m1.metric("Registrations analysed", f"{total:,}")
-    m2.metric("Period", years)
-    m3.metric("Exact config matches", f"{exact:,}")
-    if "ort" in df.columns:
-        m4.metric("Registration places", int(df["ort"].nunique(dropna=True)))
-    else:
-        m4.metric("Registration places", "—")
-
-    st.write("**Recommended most popular vehicle (K1–K7 leaders)**")
-    st.caption("Identical decision rule to Case Study notebook §4.1.")
-    st.dataframe(
-        rec.rename(
-            columns={
-                "category": "Category",
-                "component": "Leading component",
-                "registrations": "Registrations",
-                "share_pct": "Share (%)",
-            }
-        ),
-        use_container_width=True,
-        hide_index=True,
+    overall = overall_counts(df)
+    winners = winners_by_category(overall)
+    body = overall[overall["category"].isin(BODY_CATEGORIES)]
+    if body.empty or winners.empty:
+        return
+    best_body = body.loc[body["n_registrations"].idxmax()]
+    k1 = winners[winners["category"] == "K1"]
+    k2 = winners[winners["category"] == "K2"]
+    k3 = winners[winners["category"] == "K3"]
+    if k1.empty or k2.empty or k3.empty:
+        return
+    k2 = k2.iloc[0]
+    k3 = k3.iloc[0]
+    k1_txt = " or ".join(k1["component_type"].tolist())
+    st.markdown("#### One car to build")
+    st.write(
+        f"**Body {best_body['component_type']}** ({best_body['label']}) is the "
+        f"most registered platform. A feasible specification is: "
+        f"**{k1_txt}** engine, **{k2['component_type']}** seats "
+        f"({k2['label']}), **{k3['component_type']}** gearbox "
+        f"({k3['label']}), and **{best_body['component_type']}** body. "
+        "K4-K7 cannot be combined on one vehicle."
     )
-    st.info(
-        "Interpretation: combine the seven leading components to the recommended vehicle. "
-        "Exact-config matches = how often that full combination appears in the data."
-    )
-
-    fig = px.bar(
-        rec,
-        x="category",
-        y="registrations",
-        custom_data=["component", "share_pct"],
-        labels={"registrations": "Registrations", "category": "Category"},
-        title="Case Study result – leading component per category (K1–K7)",
-        category_orders={"category": K_COLS},
-    )
-    fig.update_traces(
-        marker_color=BLUE_DARK,
-        texttemplate="%{y}",
-        textposition="outside",
-        cliponaxis=False,
-        hovertemplate=(
-            "Category %{x}<br>Component %{customdata[0]}"
-            "<br>Registrations %{y}<br>Share %{customdata[1]}%<extra></extra>"
-        ),
-    )
-    ymax = float(rec["registrations"].max()) if len(rec) else 1.0
-    fig.update_yaxes(range=[0, ymax * 1.18], automargin=True)
-    fig.update_layout(margin=dict(l=64, r=24, t=64, b=48), height=380)
-    show_chart(fig)
+    c1, c2 = st.columns(2)
+    with c1:
+        st.plotly_chart(plot_category_bars(overall, "K1"), use_container_width=True)
+    with c2:
+        st.plotly_chart(plot_category_bars(overall, "K2"), use_container_width=True)
+    c3, c4 = st.columns(2)
+    with c3:
+        st.plotly_chart(plot_category_bars(overall, "K3"), use_container_width=True)
+    with c4:
+        st.plotly_chart(plot_body_bars(overall), use_container_width=True)
 
 
 def tab_trends(df: pd.DataFrame | None) -> None:
-    st.subheader("4.2 Yearly popularity trends")
-    st.write(
-        "Case-study requirement: analyse popularity **over time**. "
-        "Per category, show registration leaders by year and discuss shifts "
-        "(notebook §4.2 ↔ this tab)."
+    st.subheader("Trends and fashions by year")
+    st.caption(
+        "A stable winner every year is structural demand. "
+        "A changing winner would be a fashion."
     )
-
     if df is None:
-        st.selectbox("Component category (K1–K7)", K_COLS, index=0, disabled=True)
-        st.write("**Yearly leader**")
-        st.dataframe(EMPTY_YEARLY_LEADERS, use_container_width=True, hide_index=True)
-        empty_line_chart()
+        st.selectbox("Category", CATEGORIES, index=0, disabled=True)
         return
-
-    years = sorted(int(y) for y in df["year"].dropna().unique())
-    if not years:
-        st.warning("No year values available for trends.")
-        return
-
-    year_min, year_max = years[0], years[-1]
-    c1, c2 = st.columns([2, 1])
-    with c1:
-        if year_min == year_max:
-            st.caption(f"Only one year in the data: **{year_min}**")
-            year_range = (year_min, year_max)
-        else:
-            year_range = st.slider(
-                "Year range",
-                min_value=year_min,
-                max_value=year_max,
-                value=(year_min, year_max),
-            )
-    with c2:
-        category = st.selectbox("Component category (K1–K7)", K_COLS, index=0)
-
-    filtered = df[(df["year"] >= year_range[0]) & (df["year"] <= year_range[1])]
-    counts = category_year_counts(filtered, category)
-    if counts.empty:
-        st.warning("No component data for the selected filters.")
-        return
-
-    leaders = yearly_leaders(filtered, category)
-    st.write(f"**Yearly leader in {category}**")
-    st.dataframe(
-        leaders.rename(
-            columns={
-                "year": "Year",
-                "component": "Leading component",
-                "count": "Registrations",
-            }
-        ),
-        use_container_width=True,
-        hide_index=True,
-    )
-
-    top_n = (
-        counts.groupby("component")["count"]
-        .sum()
-        .sort_values(ascending=False)
-        .head(6)
-        .index
-    )
-    plot_df = counts[counts["component"].isin(top_n)].sort_values(["component", "year"])
-
-    fig = px.line(
-        plot_df,
-        x="year",
-        y="count",
-        color="component",
-        markers=True,
-        labels={"count": "Registrations", "year": "Year", "component": "Component"},
-        title=f"Yearly registrations – {category} (top components)",
-    )
-    fig.update_xaxes(dtick=1)
-    show_chart(fig)
-
-    overall = recommend_vehicle(df)
-    overall_comp = overall.loc[overall["category"] == category, "component"].iloc[0]
-    last_year_comp = leaders.iloc[-1]["component"] if len(leaders) else "—"
-    if last_year_comp == overall_comp:
-        st.success(
-            f"In {category}, overall leader **{overall_comp}** "
-            f"also leads in the latest year of the selected range."
-        )
+    cat = st.selectbox("Category", CATEGORIES, index=0)
+    overall = overall_counts(df)
+    st.plotly_chart(plot_trends(df, cat), use_container_width=True)
+    if cat in BODY_CATEGORIES:
+        st.plotly_chart(plot_body_bars(overall), use_container_width=True)
     else:
-        st.warning(
-            f"In {category}, overall leader **{overall_comp}** vs latest year "
-            f"**{last_year_comp}** — discuss this shift in notebook §4.2."
-        )
+        st.plotly_chart(plot_category_bars(overall, cat), use_container_width=True)
 
 
 def tab_explore(df: pd.DataFrame | None) -> None:
-    st.subheader("4.3 Stakeholder exploration")
-    st.write(
-        "Interactive checks on the **same final dataset**. "
-        "Use for management discussion and screenshots (`Additional_files/` / notebook §4.3)."
-    )
-
+    st.subheader("Filter the registration counts")
     if df is None:
-        c1, c2 = st.columns(2)
-        with c1:
-            st.multiselect("Registration years", [], disabled=True)
-            st.selectbox("Focus category", K_COLS, index=0, disabled=True)
-        with c2:
-            st.multiselect("Components in category", [], disabled=True)
-            st.multiselect("Registration places (ort)", [], disabled=True)
-        empty_bar_chart()
+        st.slider("Years", 0, 1, (0, 1), disabled=True)
+        st.multiselect("OEM", [], disabled=True)
+        st.multiselect("Categories", CATEGORIES, default=["K1", "K2", "K3"], disabled=True)
         return
-
-    years = sorted(int(y) for y in df["year"].dropna().unique().tolist())
-    c1, c2 = st.columns(2)
-    with c1:
-        sel_years = st.multiselect("Registration years", years, default=years)
-        category = st.selectbox("Focus category", K_COLS, index=0, key="explore_cat")
-    with c2:
-        components = sorted(
-            v for v in df[category].dropna().astype(str).unique().tolist()
+    years = sorted(int(y) for y in df["year"].unique())
+    year_min, year_max = years[0], years[-1]
+    if year_min == year_max:
+        st.caption(f"Only one year in the data: **{year_min}**")
+        y0, y1 = year_min, year_max
+    else:
+        y0, y1 = st.slider(
+            "Years",
+            min_value=year_min,
+            max_value=year_max,
+            value=(year_min, year_max),
         )
-        sel_components = st.multiselect(
-            f"Components in {category}",
-            components,
-            default=components[: min(5, len(components))],
-            key=f"explore_components_{category}",
-        )
-        sel_places: list[str] = []
-        if "ort" in df.columns:
-            places = sorted(
-                v for v in df["ort"].dropna().astype(str).unique().tolist()
-            )
-            sel_places = st.multiselect("Registration places (ort)", places, default=[])
-
-    if not sel_years:
-        st.warning("Select at least one year.")
-        return
-    if not sel_components:
-        st.warning("Select at least one component.")
-        return
-
-    filtered = df[df["year"].isin(sel_years)]
-    filtered = filtered[filtered[category].isin(sel_components)]
-    if sel_places:
-        filtered = filtered[filtered["ort"].isin(sel_places)]
-
-    st.caption(
-        f"Filtered view: {len(filtered):,} rows · "
-        f"{int(filtered['registrations'].sum()):,} registrations"
+    oems = st.multiselect(
+        "OEM",
+        sorted(df["oem"].dropna().unique().tolist()),
+        default=sorted(df["oem"].dropna().unique().tolist()),
     )
-    if filtered.empty:
-        st.warning("No rows match the current filters.")
-        return
-
-    overall = recommend_vehicle(df)
-    leader = overall.loc[overall["category"] == category, "component"].iloc[0]
-    leader_regs = int(
-        filtered.loc[filtered[category] == leader, "registrations"].sum()
-    )
-    st.write(
-        f"Under current filters, overall leader in **{category}** (**{leader}**) "
-        f"→ **{leader_regs:,}** registrations."
-    )
-
-    share = (
-        filtered.groupby(category, as_index=False)["registrations"]
+    cats = st.multiselect("Categories", CATEGORIES, default=["K1", "K2", "K3"])
+    filtered = df[
+        df["year"].between(y0, y1)
+        & df["oem"].isin(oems)
+        & df["category"].isin(cats)
+    ]
+    agg = (
+        filtered.groupby(["category", "component_type", "label"], as_index=False)[
+            "n_registrations"
+        ]
         .sum()
-        .rename(columns={category: "component", "registrations": "count"})
-        .sort_values("count", ascending=False)
+        .sort_values("n_registrations", ascending=False)
     )
     fig = px.bar(
-        share,
-        x="component",
-        y="count",
-        labels={"count": "Registrations", "component": "Component"},
-        title=f"Filtered registrations by {category}",
+        agg,
+        x="component_type",
+        y="n_registrations",
+        color="category",
+        title="Filtered registrations by component type",
+        labels={
+            "component_type": "Component type",
+            "n_registrations": "Registered vehicles",
+            "category": "Category",
+        },
+        color_discrete_sequence=PLOTLY_BLUES,
     )
-    fig.update_traces(marker_color=BLUE)
-    show_chart(fig)
-
-    if {"lat", "lon"}.issubset(filtered.columns):
-        map_df = filtered.dropna(subset=["lat", "lon"]).copy()
-        map_df = map_df[
-            map_df["lat"].between(-90, 90) & map_df["lon"].between(-180, 180)
-        ]
-        if not map_df.empty:
-            st.write("**Geographic distribution** (if geodata is in the final CSV)")
-            st.map(
-                map_df.rename(columns={"lat": "latitude", "lon": "longitude"})[
-                    ["latitude", "longitude"]
-                ]
-            )
+    st.plotly_chart(style_fig(fig), use_container_width=True)
+    st.dataframe(agg, use_container_width=True, hide_index=True)
 
 
 def tab_table(df: pd.DataFrame | None) -> None:
-    st.subheader("3 → Final dataset used by the app")
-    st.write(
-        "One tidy table from Case Study notebook §3: "
-        "`Data/SoSe26_Case_Study_finalData_Group_38.csv`. "
-        "Required columns: `year`, `K1`…`K7`. Optional: `registrations`, `ort`, `plz`, `lat`, `lon`."
-    )
-
+    st.subheader("Final dataset (all rows)")
     if df is None:
-        st.dataframe(EMPTY_FINAL_DATA, use_container_width=True, hide_index=True)
+        st.caption(f"Source: `{DATA_PATH.relative_to(ROOT).as_posix()}`")
+        blank = {c: "-" for c in REQUIRED_COLS}
+        st.dataframe(pd.DataFrame([blank]), use_container_width=True, hide_index=True)
         return
-
-    st.caption("Full final dataset — source of all charts above.")
-    st.dataframe(df, use_container_width=True, hide_index=True)
-    st.download_button(
-        label="Download final dataset (CSV)",
-        data=df.to_csv(index=False).encode("utf-8"),
-        file_name="SoSe26_Case_Study_finalData_Group_38_view.csv",
-        mime="text/csv",
+    st.caption(
+        f"Source: `{DATA_PATH.relative_to(ROOT).as_posix()}` · {len(df):,} rows. "
+        "This is the only file the app reads."
     )
+    st.dataframe(df, use_container_width=True, hide_index=True)
 
 
 def main() -> None:
     st.set_page_config(
-        page_title="IDA Case Study – Group 38",
-        page_icon=None,
+        page_title="Most popular vehicle | IDA Group 38",
         layout="wide",
         initial_sidebar_state="collapsed",
     )
-    inject_styles()
+    apply_design()
     render_header()
 
-    st.sidebar.markdown("**Case Study link**")
-    st.sidebar.caption("Notebook §3 → final CSV")
-    st.sidebar.caption("Notebook §4 → tabs 4.1–4.3")
-    st.sidebar.caption("doc/final-data-contract.md")
-    st.sidebar.caption("doc/app-case-study-traceability.md")
-
-    df: pd.DataFrame | None = None
-    if DATA_PATH.is_file():
-        try:
-            df = load_final_data(str(DATA_PATH))
-            st.sidebar.write(f"{len(df):,} rows")
-            st.sidebar.write(f"Years {int(df['year'].min())}–{int(df['year'].max())}")
-        except Exception as exc:
-            st.error(f"Could not load final dataset: {exc}")
-            df = None
+    st.sidebar.markdown("**Data source**")
     st.sidebar.caption("Data/SoSe26_Case_Study_finalData_Group_38.csv")
 
-    tab_o, tab_t, tab_e, tab_d = st.tabs(
-        [
-            "4.1 Recommendation",
-            "4.2 Yearly trends",
-            "4.3 Explore",
-            "Final dataset",
-        ]
-    )
-    with tab_o:
-        tab_result(df)
-    with tab_t:
-        tab_trends(df)
-    with tab_e:
-        tab_explore(df)
-    with tab_d:
-        tab_table(df)
+    df: pd.DataFrame | None = None
+    try:
+        df = load_final_data()
+    except Exception as exc:
+        st.error(f"Could not load final dataset: {exc}")
+        df = None
+    if df is not None:
+        st.sidebar.write(f"{len(df):,} rows")
+        st.sidebar.write(f"Years {int(df['year'].min())}–{int(df['year'].max())}")
 
-    st.markdown(
-        '<p class="footer-note">IDA SoSe26 · Group 38</p>',
-        unsafe_allow_html=True,
+    tab_rec, tab_trend, tab_explore_ui, tab_full = st.tabs(
+        ["Recommendation", "Yearly trends", "Explore", "Full data"]
     )
+    with tab_rec:
+        tab_recommendation(df)
+    with tab_trend:
+        tab_trends(df)
+    with tab_explore_ui:
+        tab_explore(df)
+    with tab_full:
+        tab_table(df)
 
 
 if __name__ == "__main__":

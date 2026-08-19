@@ -16,7 +16,7 @@ SoSe26_Case_Study_Group_38/
 └── SoSe26_Case_Study_App_Group_38.py
 ```
 
-Right now this working copy only has empty `Additional_files/`, `Data/`, `www/` plus `doc/`. Notebooks / app / final CSV come later.
+Working copy folder is currently named `IDA-SoSe26` (rename to `SoSe26_Case_Study_Group_38` when zipping for submission). Placeholder notebooks, HTML exports, app, and empty final CSV are in place; content comes later.
 
 Notes:
 

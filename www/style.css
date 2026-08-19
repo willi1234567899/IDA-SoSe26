@@ -1,0 +1,96 @@
+@font-face {
+  font-family: "Source Sans Pro";
+  font-style: normal;
+  font-weight: 400;
+  src: url("fonts/source-sans-3-latin-400-normal.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Source Sans Pro";
+  font-style: normal;
+  font-weight: 600;
+  src: url("fonts/source-sans-3-latin-600-normal.woff2") format("woff2");
+}
+
+:root {
+  --ida-blue: #5ba4cf;
+  --ida-blue-dark: #2f5f7a;
+  --ida-blue-soft: #e8f4fa;
+  --ida-text: #1f2d3a;
+}
+
+html, body, [data-testid="stAppViewContainer"] {
+  font-family: "Source Sans Pro", "Source Sans 3", Helvetica, Arial, sans-serif;
+  color: var(--ida-text);
+  background: #ffffff;
+}
+
+[data-testid="stHeader"] {
+  background: #ffffff;
+}
+
+[data-testid="stSidebar"] {
+  background: #ffffff;
+}
+
+.ida-logo svg {
+  max-width: 200px;
+  height: auto;
+  display: block;
+}
+
+.ida-hero {
+  padding: 0.15rem 0 0.85rem 0;
+  margin-bottom: 0.25rem;
+  border-bottom: 2px solid var(--ida-blue);
+}
+
+.ida-hero h1 {
+  color: var(--ida-text);
+  font-size: 1.55rem;
+  font-weight: 700;
+  margin: 0 0 0.25rem 0;
+}
+
+.ida-hero p {
+  margin: 0;
+  color: #4a6a7a;
+}
+
+div[data-testid="stMetric"] {
+  background: transparent;
+  border: none;
+  padding: 0;
+}
+
+div[data-testid="stMetricValue"],
+div[data-testid="stMetricValue"] * {
+  color: var(--ida-text) !important;
+}
+
+div[data-testid="stMetricLabel"],
+div[data-testid="stMetricLabel"] * {
+  color: #4a6a7a !important;
+}
+
+.stTabs [data-baseweb="tab"] {
+  color: #4a6a7a !important;
+}
+
+.stTabs [aria-selected="true"] {
+  color: var(--ida-text) !important;
+}
+
+.stTabs [data-baseweb="tab-highlight"] {
+  background-color: var(--ida-blue) !important;
+}
+
+div[data-testid="stAlert"] {
+  background: transparent !important;
+  border: none !important;
+  padding-left: 0 !important;
+}
+
+div[data-testid="stAlert"] [data-testid="stMarkdownContainer"] {
+  color: var(--ida-text) !important;
+}
