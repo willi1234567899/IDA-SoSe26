@@ -6,3 +6,13 @@ Planning notes: [`doc/`](doc/README.md)
 Submission layout / naming: [`doc/folder-structure.md`](doc/folder-structure.md)
 
 **Deadline:** 1 September 2026, 23:59
+
+## Run the case-study app
+
+From this folder, after the notebook has written `Data/SoSe26_Case_Study_finalData_Group_38.csv`:
+
+```text
+streamlit run SoSe26_Case_Study_App_Group_38.py
+```
+
+The app reads only that CSV. Original tables stay under `Data/` (Fahrzeug, Zulassungen, …).

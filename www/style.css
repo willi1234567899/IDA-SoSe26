@@ -1,0 +1,46 @@
+@font-face {
+  font-family: "Source Sans Pro";
+  font-style: normal;
+  font-weight: 400;
+  src: url("fonts/source-sans-3-latin-400-normal.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Source Sans Pro";
+  font-style: normal;
+  font-weight: 600;
+  src: url("fonts/source-sans-3-latin-600-normal.woff2") format("woff2");
+}
+
+:root {
+  --ida-blue: #5ba4cf;
+  --ida-blue-dark: #2f5f7a;
+  --ida-blue-soft: #e8f4fa;
+  --ida-text: #1f2d3a;
+}
+
+html, body, [data-testid="stAppViewContainer"] {
+  font-family: "Source Sans Pro", "Source Sans 3", Helvetica, Arial, sans-serif;
+  color: var(--ida-text);
+}
+
+[data-testid="stHeader"] {
+  background: var(--ida-blue-soft);
+}
+
+[data-testid="stSidebar"] {
+  background: var(--ida-blue-soft);
+}
+
+.ida-hero {
+  background: var(--ida-blue-soft);
+  border-left: 6px solid var(--ida-blue);
+  padding: 0.9rem 1.1rem;
+  margin-bottom: 1rem;
+}
+
+.ida-hero h1 {
+  color: var(--ida-blue-dark);
+  font-size: 1.7rem;
+  margin: 0 0 0.25rem 0;
+}
