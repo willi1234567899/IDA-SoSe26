@@ -13,6 +13,8 @@ Based on the official PDFs: Case Study, General Tasks, Submission Requirements, 
 | [general-tasks.md](general-tasks.md) | General Tasks 1–6 (25 points) |
 | [work-distribution.md](work-distribution.md) | split across 5 people |
 | [milestones.md](milestones.md) | timeline + checklist |
+| [final-data-contract.md](final-data-contract.md) | Final CSV columns for notebook ↔ Streamlit app |
+| [app-case-study-traceability.md](app-case-study-traceability.md) | How app tabs map to Case Study §3–§4 results |
 
 ## What we have to deliver
 

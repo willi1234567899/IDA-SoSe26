@@ -226,13 +226,31 @@ data/**
 !data/**/
 !data/**/.gitkeep
 
+# Additional_files: allow screenshots / extras; ignore stray data dumps
 Additional_files/**
 !Additional_files/**/
 !Additional_files/**/.gitkeep
+!Additional_files/**/*.png
+!Additional_files/**/*.jpg
+!Additional_files/**/*.jpeg
+!Additional_files/**/*.webp
+!Additional_files/**/*.gif
+!Additional_files/**/*.md
 
+# www: track static app assets (CSS, fonts, logo)
 www/**
 !www/**/
 !www/**/.gitkeep
+!www/**/*.css
+!www/**/*.svg
+!www/**/*.png
+!www/**/*.jpg
+!www/**/*.jpeg
+!www/**/*.woff
+!www/**/*.woff2
+!www/**/*.ttf
+!www/**/*.otf
+!www/**/*.md
 
 *.csv
 *.parquet
