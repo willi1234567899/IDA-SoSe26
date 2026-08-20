@@ -20,9 +20,9 @@ matplotlib
 seaborn
 plotly
 
-# Web app (submission: Dash and/or Streamlit)
+# Web app (submission: Dash or Streamlit)
 streamlit
-dash
+#dash
 flask
 
 # Notebooks

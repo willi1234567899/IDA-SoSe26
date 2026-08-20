@@ -3,7 +3,7 @@ SoSe26 Case Study App – Group 38
 
 Run from this folder (Anaconda / project env):
 
-    streamlit run SoSe26_Case_Study_App_Group_38.py
+    python3 -m streamlit run SoSe26_Case_Study_App_Group_38.py
 
 The app reads only:
     Data/SoSe26_Case_Study_finalData_Group_38.csv
@@ -40,6 +40,9 @@ def load_data() -> pd.DataFrame:
         st.stop()
     df = pd.read_csv(DATA_PATH)
     df["year"] = df["year"].astype(int)
+    for col in ["manufacturer", "plant"]:
+        if col in df.columns:
+            df[col] = df[col].astype(str)
     return df
 
 
@@ -94,9 +97,10 @@ def style_fig(fig):
 
 def overall_counts(df: pd.DataFrame) -> pd.DataFrame:
     return (
-        df.groupby(["category", "component_type", "label"], as_index=False)[
-            "n_registrations"
-        ]
+        df.groupby(
+            ["category", "component_type", "manufacturer", "plant", "series", "label"],
+            as_index=False,
+        )["n_registrations"]
         .sum()
         .sort_values(["category", "n_registrations"], ascending=[True, False])
     )
@@ -113,21 +117,24 @@ def winners_by_category(overall: pd.DataFrame) -> pd.DataFrame:
     return pd.concat(rows, ignore_index=True)
 
 
-def plot_category_bars(overall: pd.DataFrame, category: str, title: Optional[str] = None):
-    sub = overall[overall["category"] == category]
+def plot_series_bars(overall: pd.DataFrame, category: str, title: Optional[str] = None):
+    sub = overall[overall["category"] == category].sort_values(
+        "n_registrations", ascending=False
+    )
     fig = px.bar(
         sub,
-        x="component_type",
+        x="series",
         y="n_registrations",
         color="label",
-        title=title or f"Registered vehicles by component type — {category}",
+        title=title or f"Registered vehicles by series - {category}",
         labels={
-            "component_type": "Component type",
+            "series": "Component series",
             "n_registrations": "Registered vehicles",
-            "label": "Description",
+            "label": "Type",
         },
         color_discrete_sequence=PLOTLY_BLUES,
     )
+    fig.update_layout(xaxis_tickangle=-35)
     return style_fig(fig)
 
 
@@ -135,37 +142,38 @@ def plot_body_bars(overall: pd.DataFrame):
     body = overall[overall["category"].isin(BODY_CATEGORIES)]
     fig = px.bar(
         body,
-        x="component_type",
+        x="series",
         y="n_registrations",
-        color="label",
-        title="Registered vehicles by body type (K4–K7)",
+        color="category",
+        title="Registered vehicles by body series (K4-K7)",
         labels={
-            "component_type": "Body type",
+            "series": "Body series",
             "n_registrations": "Registered vehicles",
-            "label": "Description",
+            "category": "Category",
         },
         color_discrete_sequence=PLOTLY_BLUES,
     )
+    fig.update_layout(xaxis_tickangle=-35)
     return style_fig(fig)
 
 
 def plot_trends(df: pd.DataFrame, category: str):
     yearly = (
         df[df["category"] == category]
-        .groupby(["year", "component_type", "label"], as_index=False)["n_registrations"]
+        .groupby(["year", "series"], as_index=False)["n_registrations"]
         .sum()
     )
     fig = px.line(
         yearly,
         x="year",
         y="n_registrations",
-        color="component_type",
+        color="series",
         markers=True,
-        title=f"Yearly registrations — {category}",
+        title=f"Yearly registrations - {category}",
         labels={
             "year": "Registration year",
             "n_registrations": "Registered vehicles",
-            "component_type": "Component type",
+            "series": "Component series",
         },
         color_discrete_sequence=PLOTLY_BLUES,
     )
@@ -195,10 +203,10 @@ def main() -> None:
         st.markdown(
             """
             <div class="ida-hero">
-              <h1>Most popular vehicle — component recommendation</h1>
-              <p>Management briefing based on KBA registrations 2009–2016.
-              Popularity is counted at <b>component type</b> (e.g. K1BE1),
-              not at plant or serial number.</p>
+              <h1>Most popular vehicle - component recommendation</h1>
+              <p>Management briefing based on KBA registrations 2009-2016.
+              Popularity is counted at <b>series</b> level
+              (type + manufacturer + plant), e.g. K1BE1-104-1041.</p>
             </div>
             """,
             unsafe_allow_html=True,
@@ -209,45 +217,60 @@ def main() -> None:
     )
 
     with tab_rec:
-        st.subheader("Recommended component types (K1–K7)")
+        st.subheader("Recommended component series (K1-K7)")
         st.caption(
-            "Winner in each category = type with the most registered vehicles "
+            "Winner in each category = series with the most registered vehicles "
             "over the full period. Equal counts are shown as a joint win."
         )
         rec_cols = st.columns(7)
         for i, cat in enumerate(CATEGORIES):
             sub = winners[winners["category"] == cat]
-            types = " / ".join(sub["component_type"].tolist())
+            series_txt = " / ".join(sub["series"].tolist())
             n = int(sub["n_registrations"].iloc[0])
-            rec_cols[i].metric(cat, types, f"{n:,} vehicles")
+            rec_cols[i].metric(cat, series_txt, f"{n:,} vehicles")
 
-        st.dataframe(winners, use_container_width=True, hide_index=True)
+        st.dataframe(
+            winners[
+                [
+                    "category",
+                    "series",
+                    "component_type",
+                    "manufacturer",
+                    "plant",
+                    "label",
+                    "n_registrations",
+                ]
+            ],
+            use_container_width=True,
+            hide_index=True,
+        )
 
         body = overall[overall["category"].isin(BODY_CATEGORIES)]
         best_body = body.loc[body["n_registrations"].idxmax()]
         k1 = winners[winners["category"] == "K1"]
-        k2 = winners[winners["category"] == "K2"].iloc[0]
-        k3 = winners[winners["category"] == "K3"].iloc[0]
-        k1_txt = " or ".join(k1["component_type"].tolist())
+        k2 = winners[winners["category"] == "K2"]
+        k3 = winners[winners["category"] == "K3"]
+        k1_txt = " or ".join(k1["series"].tolist())
+        k2_txt = " or ".join(k2["series"].tolist())
+        k3_txt = " or ".join(k3["series"].tolist())
 
         st.markdown("#### One car to build")
         st.info(
-            f"**Body {best_body['component_type']}** ({best_body['label']}) is the "
+            f"**Body {best_body['series']}** ({best_body['label']}) is the "
             f"most registered platform. A feasible specification is: "
-            f"**{k1_txt}** engine, **{k2['component_type']}** seats "
-            f"({k2['label']}), **{k3['component_type']}** gearbox "
-            f"({k3['label']}), and **K4** body. "
-            "K4–K7 cannot be combined on one vehicle."
+            f"engine **{k1_txt}**, seats **{k2_txt}**, "
+            f"gearbox **{k3_txt}**, body **{best_body['series']}**. "
+            "K4-K7 cannot be combined on one vehicle."
         )
 
         c1, c2 = st.columns(2)
         with c1:
-            st.plotly_chart(plot_category_bars(overall, "K1"), use_container_width=True)
+            st.plotly_chart(plot_series_bars(overall, "K1"), use_container_width=True)
         with c2:
-            st.plotly_chart(plot_category_bars(overall, "K2"), use_container_width=True)
+            st.plotly_chart(plot_series_bars(overall, "K2"), use_container_width=True)
         c3, c4 = st.columns(2)
         with c3:
-            st.plotly_chart(plot_category_bars(overall, "K3"), use_container_width=True)
+            st.plotly_chart(plot_series_bars(overall, "K3"), use_container_width=True)
         with c4:
             st.plotly_chart(plot_body_bars(overall), use_container_width=True)
 
@@ -262,7 +285,7 @@ def main() -> None:
         if cat in BODY_CATEGORIES:
             st.plotly_chart(plot_body_bars(overall), use_container_width=True)
         else:
-            st.plotly_chart(plot_category_bars(overall, cat), use_container_width=True)
+            st.plotly_chart(plot_series_bars(overall, cat), use_container_width=True)
 
     with tab_explore:
         st.subheader("Filter the registration counts")
@@ -285,25 +308,27 @@ def main() -> None:
             & df["category"].isin(cats)
         ]
         agg = (
-            filtered.groupby(["category", "component_type", "label"], as_index=False)[
-                "n_registrations"
-            ]
+            filtered.groupby(
+                ["category", "series", "component_type", "manufacturer", "plant", "label"],
+                as_index=False,
+            )["n_registrations"]
             .sum()
             .sort_values("n_registrations", ascending=False)
         )
         fig = px.bar(
             agg,
-            x="component_type",
+            x="series",
             y="n_registrations",
             color="category",
-            title="Filtered registrations by component type",
+            title="Filtered registrations by component series",
             labels={
-                "component_type": "Component type",
+                "series": "Component series",
                 "n_registrations": "Registered vehicles",
                 "category": "Category",
             },
             color_discrete_sequence=PLOTLY_BLUES,
         )
+        fig.update_layout(xaxis_tickangle=-35)
         st.plotly_chart(style_fig(fig), use_container_width=True)
         st.dataframe(agg, use_container_width=True, hide_index=True)
 
