@@ -28,6 +28,23 @@ FONT_SEMIBOLD = Path("www") / "fonts" / "source-sans-3-latin-600-normal.woff2"
 PLOTLY_BLUES = ["#2F5F7A", "#5BA4CF", "#8FCBE8", "#C5E4F3"]
 CATEGORIES = ["K1", "K2", "K3", "K4", "K5", "K6", "K7"]
 BODY_CATEGORIES = ["K4", "K5", "K6", "K7"]
+# data span is 2009-2016; no explicit production start/stop flags exist, so
+# "series start" = first year with registrations > 2009
+# "series end" = last year with registrations < 2016
+DATA_START_YEAR = 2009
+DATA_END_YEAR = 2016
+SERIES_START_MARKER = dict(
+    symbol="triangle-up",
+    size=12,
+    color="#1F7A4D",
+    line=dict(width=1, color="#1F7A4D"),
+)
+SERIES_END_MARKER = dict(
+    symbol="x",
+    size=14,
+    color="#C0392B",
+    line=dict(width=2, color="#C0392B"),
+)
 
 
 @st.cache_data
@@ -157,6 +174,40 @@ def plot_body_bars(overall: pd.DataFrame):
     return style_fig(fig)
 
 
+def mark_series_span(fig, yearly: pd.DataFrame):
+    """Mark first/last registration year when they fall inside the data span edges."""
+    first = yearly.loc[yearly.groupby("series")["year"].idxmin()]
+    started = first[first["year"] > DATA_START_YEAR]
+    if not started.empty:
+        fig.add_scatter(
+            x=started["year"],
+            y=started["n_registrations"],
+            mode="markers",
+            marker=SERIES_START_MARKER,
+            name="series start (first registration after 2009)",
+            legendgroup="series_start",
+            hovertemplate=(
+                "series start<br>year=%{x}<br>registrations=%{y:,}<extra></extra>"
+            ),
+        )
+
+    last = yearly.loc[yearly.groupby("series")["year"].idxmax()]
+    ended = last[last["year"] < DATA_END_YEAR]
+    if not ended.empty:
+        fig.add_scatter(
+            x=ended["year"],
+            y=ended["n_registrations"],
+            mode="markers",
+            marker=SERIES_END_MARKER,
+            name="series end (last registration before 2016)",
+            legendgroup="series_end",
+            hovertemplate=(
+                "series end<br>year=%{x}<br>registrations=%{y:,}<extra></extra>"
+            ),
+        )
+    return fig
+
+
 def plot_trends(df: pd.DataFrame, category: str):
     yearly = (
         df[df["category"] == category]
@@ -178,7 +229,7 @@ def plot_trends(df: pd.DataFrame, category: str):
         color_discrete_sequence=PLOTLY_BLUES,
     )
     fig.update_layout(xaxis=dict(dtick=1))
-    return style_fig(fig)
+    return style_fig(mark_series_span(fig, yearly))
 
 
 def main() -> None:
@@ -278,7 +329,10 @@ def main() -> None:
         st.subheader("Trends and fashions by year")
         st.caption(
             "A stable winner every year is structural demand. "
-            "A changing winner would be a fashion."
+            "A changing winner would be a fashion. "
+            "A green ▲ marks first registration after 2009 (series start); "
+            "a red × marks last registration before 2016 (series end). "
+            "Both are proxies; the data has no production start/stop flag."
         )
         cat = st.selectbox("Category", CATEGORIES, index=0)
         st.plotly_chart(plot_trends(df, cat), use_container_width=True)
