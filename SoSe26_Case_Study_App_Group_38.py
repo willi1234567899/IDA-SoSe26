@@ -46,9 +46,12 @@ SERIES_END_MARKER = dict(
     line=dict(width=2, color="#C0392B"),
 )
 
+COUNT_ALL = "n_registrations"
+COUNT_CLEAN = "n_registrations_clean"
+
 
 @st.cache_data
-def load_data() -> pd.DataFrame:
+def load_data(data_mtime: float) -> pd.DataFrame:
     if not DATA_PATH.exists():
         st.error(
             f"Final dataset not found at `{DATA_PATH}`. "
@@ -60,8 +63,15 @@ def load_data() -> pd.DataFrame:
     for col in ["manufacturer", "plant"]:
         if col in df.columns:
             df[col] = df[col].astype(str)
+    if COUNT_CLEAN not in df.columns:
+        df[COUNT_CLEAN] = df[COUNT_ALL]
     return df
 
+
+def get_data() -> pd.DataFrame:
+    """Load final CSV, busting cache when the file changes on disk."""
+    mtime = DATA_PATH.stat().st_mtime if DATA_PATH.exists() else 0.0
+    return load_data(mtime)
 
 def _font_face(path: Path, weight: int) -> str:
     if not path.exists():
@@ -112,14 +122,26 @@ def style_fig(fig):
     return fig
 
 
-def overall_counts(df: pd.DataFrame) -> pd.DataFrame:
+def active_count_col(consider_defects: bool) -> str:
+    return COUNT_CLEAN if consider_defects else COUNT_ALL
+
+
+def with_count(df: pd.DataFrame, count_col: str) -> pd.DataFrame:
+    """Normalize the active metric to column name n_count for plotting."""
+    out = df.copy()
+    out["n_count"] = out[count_col]
+    return out
+
+
+def overall_counts(df: pd.DataFrame, count_col: str) -> pd.DataFrame:
     return (
         df.groupby(
             ["category", "component_type", "manufacturer", "plant", "series", "label"],
             as_index=False,
-        )["n_registrations"]
+        )[count_col]
         .sum()
-        .sort_values(["category", "n_registrations"], ascending=[True, False])
+        .rename(columns={count_col: "n_count"})
+        .sort_values(["category", "n_count"], ascending=[True, False])
     )
 
 
@@ -129,24 +151,22 @@ def winners_by_category(overall: pd.DataFrame) -> pd.DataFrame:
         sub = overall[overall["category"] == cat]
         if sub.empty:
             continue
-        top_n = sub["n_registrations"].max()
-        rows.append(sub[sub["n_registrations"] == top_n])
+        top_n = sub["n_count"].max()
+        rows.append(sub[sub["n_count"] == top_n])
     return pd.concat(rows, ignore_index=True)
 
 
 def plot_series_bars(overall: pd.DataFrame, category: str, title: Optional[str] = None):
-    sub = overall[overall["category"] == category].sort_values(
-        "n_registrations", ascending=False
-    )
+    sub = overall[overall["category"] == category].sort_values("n_count", ascending=False)
     fig = px.bar(
         sub,
         x="series",
-        y="n_registrations",
+        y="n_count",
         color="label",
         title=title or f"Registered vehicles by series - {category}",
         labels={
             "series": "Component series",
-            "n_registrations": "Registered vehicles",
+            "n_count": "Registered vehicles",
             "label": "Type",
         },
         color_discrete_sequence=PLOTLY_BLUES,
@@ -160,12 +180,12 @@ def plot_body_bars(overall: pd.DataFrame):
     fig = px.bar(
         body,
         x="series",
-        y="n_registrations",
+        y="n_count",
         color="category",
         title="Registered vehicles by body series (K4-K7)",
         labels={
             "series": "Body series",
-            "n_registrations": "Registered vehicles",
+            "n_count": "Registered vehicles",
             "category": "Category",
         },
         color_discrete_sequence=PLOTLY_BLUES,
@@ -181,7 +201,7 @@ def mark_series_span(fig, yearly: pd.DataFrame):
     if not started.empty:
         fig.add_scatter(
             x=started["year"],
-            y=started["n_registrations"],
+            y=started["n_count"],
             mode="markers",
             marker=SERIES_START_MARKER,
             name="series start (first registration after 2009)",
@@ -196,7 +216,7 @@ def mark_series_span(fig, yearly: pd.DataFrame):
     if not ended.empty:
         fig.add_scatter(
             x=ended["year"],
-            y=ended["n_registrations"],
+            y=ended["n_count"],
             mode="markers",
             marker=SERIES_END_MARKER,
             name="series end (last registration before 2016)",
@@ -208,22 +228,23 @@ def mark_series_span(fig, yearly: pd.DataFrame):
     return fig
 
 
-def plot_trends(df: pd.DataFrame, category: str):
+def plot_trends(df: pd.DataFrame, category: str, count_col: str):
     yearly = (
         df[df["category"] == category]
-        .groupby(["year", "series"], as_index=False)["n_registrations"]
+        .groupby(["year", "series"], as_index=False)[count_col]
         .sum()
+        .rename(columns={count_col: "n_count"})
     )
     fig = px.line(
         yearly,
         x="year",
-        y="n_registrations",
+        y="n_count",
         color="series",
         markers=True,
         title=f"Yearly registrations - {category}",
         labels={
             "year": "Registration year",
-            "n_registrations": "Registered vehicles",
+            "n_count": "Registered vehicles",
             "series": "Component series",
         },
         color_discrete_sequence=PLOTLY_BLUES,
@@ -238,9 +259,7 @@ def main() -> None:
         layout="wide",
     )
     apply_design()
-    df = load_data()
-    overall = overall_counts(df)
-    winners = winners_by_category(overall)
+    df = get_data()
 
     header_l, header_r = st.columns([1, 5])
     with header_l:
@@ -263,6 +282,49 @@ def main() -> None:
             unsafe_allow_html=True,
         )
 
+    mode_col, total_col = st.columns([3, 1])
+    with mode_col:
+        mode = st.radio(
+            "Analysis mode",
+            options=["Without defects", "With defects"],
+            index=0,
+            horizontal=True,
+            key="defect_mode",
+            help=(
+                "With defects: exclude vehicles marked defective themselves, or with a "
+                "defective installed component or part (parts make their component "
+                "defective too). Only defects after registration count."
+            ),
+        )
+    consider_defects = mode.startswith("With")
+    count_col = active_count_col(consider_defects)
+    mode_tag = "clean" if consider_defects else "all"
+    with total_col:
+        st.metric(
+            "Total (active mode)",
+            f"{int(df[count_col].sum()):,}",
+            help=f"Sum of `{count_col}` over the final table.",
+        )
+
+    if consider_defects:
+        st.info(
+            "Mode: **with defects** — ranking uses registrations of vehicles "
+            "that are not defective (after-registration defects only)."
+        )
+    else:
+        st.caption("Mode: **without defects** — all KBA registrations.")
+
+    st.sidebar.header("Defectiveness rule")
+    st.sidebar.write(f"**Active:** {mode}")
+    st.sidebar.caption(
+        "A vehicle is defective if the vehicle itself, an installed component, "
+        "or an installed single part is marked defective. A defective part also "
+        "makes its component defective. Only defects after registration are used."
+    )
+
+    overall = overall_counts(df, count_col)
+    winners = winners_by_category(overall)
+
     tab_rec, tab_trend, tab_explore, tab_table = st.tabs(
         ["Recommendation", "Yearly trends", "Explore", "Full data"]
     )
@@ -277,7 +339,7 @@ def main() -> None:
         for i, cat in enumerate(CATEGORIES):
             sub = winners[winners["category"] == cat]
             series_txt = " / ".join(sub["series"].tolist())
-            n = int(sub["n_registrations"].iloc[0])
+            n = int(sub["n_count"].iloc[0])
             rec_cols[i].metric(cat, series_txt, f"{n:,} vehicles")
 
         st.dataframe(
@@ -289,15 +351,16 @@ def main() -> None:
                     "manufacturer",
                     "plant",
                     "label",
-                    "n_registrations",
+                    "n_count",
                 ]
-            ],
-            use_container_width=True,
+            ].rename(columns={"n_count": "n_registrations"}),
+            width="stretch",
             hide_index=True,
+            key=f"rec_winners_table_{mode_tag}",
         )
 
         body = overall[overall["category"].isin(BODY_CATEGORIES)]
-        best_body = body.loc[body["n_registrations"].idxmax()]
+        best_body = body.loc[body["n_count"].idxmax()]
         k1 = winners[winners["category"] == "K1"]
         k2 = winners[winners["category"] == "K2"]
         k3 = winners[winners["category"] == "K3"]
@@ -316,14 +379,30 @@ def main() -> None:
 
         c1, c2 = st.columns(2)
         with c1:
-            st.plotly_chart(plot_series_bars(overall, "K1"), use_container_width=True)
+            st.plotly_chart(
+                plot_series_bars(overall, "K1"),
+                width="stretch",
+                key=f"rec_bars_k1_{mode_tag}",
+            )
         with c2:
-            st.plotly_chart(plot_series_bars(overall, "K2"), use_container_width=True)
+            st.plotly_chart(
+                plot_series_bars(overall, "K2"),
+                width="stretch",
+                key=f"rec_bars_k2_{mode_tag}",
+            )
         c3, c4 = st.columns(2)
         with c3:
-            st.plotly_chart(plot_series_bars(overall, "K3"), use_container_width=True)
+            st.plotly_chart(
+                plot_series_bars(overall, "K3"),
+                width="stretch",
+                key=f"rec_bars_k3_{mode_tag}",
+            )
         with c4:
-            st.plotly_chart(plot_body_bars(overall), use_container_width=True)
+            st.plotly_chart(
+                plot_body_bars(overall),
+                width="stretch",
+                key=f"rec_bars_body_{mode_tag}",
+            )
 
     with tab_trend:
         st.subheader("Trends and fashions by year")
@@ -334,12 +413,24 @@ def main() -> None:
             "a red × marks last registration before 2016 (series end). "
             "Both are proxies; the data has no production start/stop flag."
         )
-        cat = st.selectbox("Category", CATEGORIES, index=0)
-        st.plotly_chart(plot_trends(df, cat), use_container_width=True)
+        cat = st.selectbox("Category", CATEGORIES, index=0, key="trend_category")
+        st.plotly_chart(
+            plot_trends(df, cat, count_col),
+            width="stretch",
+            key=f"trend_lines_{cat}_{mode_tag}",
+        )
         if cat in BODY_CATEGORIES:
-            st.plotly_chart(plot_body_bars(overall), use_container_width=True)
+            st.plotly_chart(
+                plot_body_bars(overall),
+                width="stretch",
+                key=f"trend_bars_body_{cat}_{mode_tag}",
+            )
         else:
-            st.plotly_chart(plot_series_bars(overall, cat), use_container_width=True)
+            st.plotly_chart(
+                plot_series_bars(overall, cat),
+                width="stretch",
+                key=f"trend_bars_{cat}_{mode_tag}",
+            )
 
     with tab_explore:
         st.subheader("Filter the registration counts")
@@ -365,34 +456,47 @@ def main() -> None:
             filtered.groupby(
                 ["category", "series", "component_type", "manufacturer", "plant", "label"],
                 as_index=False,
-            )["n_registrations"]
+            )[count_col]
             .sum()
-            .sort_values("n_registrations", ascending=False)
+            .rename(columns={count_col: "n_count"})
+            .sort_values("n_count", ascending=False)
         )
         fig = px.bar(
             agg,
             x="series",
-            y="n_registrations",
+            y="n_count",
             color="category",
             title="Filtered registrations by component series",
             labels={
                 "series": "Component series",
-                "n_registrations": "Registered vehicles",
+                "n_count": "Registered vehicles",
                 "category": "Category",
             },
             color_discrete_sequence=PLOTLY_BLUES,
         )
         fig.update_layout(xaxis_tickangle=-35)
-        st.plotly_chart(style_fig(fig), use_container_width=True)
-        st.dataframe(agg, use_container_width=True, hide_index=True)
+        st.plotly_chart(
+            style_fig(fig), width="stretch", key=f"explore_bars_{mode_tag}"
+        )
+        st.dataframe(
+            agg.rename(columns={"n_count": "n_registrations"}),
+            width="stretch",
+            hide_index=True,
+            key=f"explore_table_{mode_tag}",
+        )
 
     with tab_table:
         st.subheader("Final dataset (all rows)")
         st.caption(
             f"Source: `{DATA_PATH}` · {len(df):,} rows. "
-            "This is the only file the app reads."
+            "This is the only file the app reads. "
+            "`n_registrations` = all vehicles; "
+            "`n_registrations_clean` = excluding defective vehicles "
+            "(after registration)."
         )
-        st.dataframe(df, use_container_width=True, hide_index=True)
+        st.dataframe(
+            df, width="stretch", hide_index=True, key=f"full_table_{mode_tag}"
+        )
 
 
 if __name__ == "__main__":
