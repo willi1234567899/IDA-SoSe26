@@ -20,8 +20,11 @@ import plotly.express as px
 import streamlit as st
 
 DATA_PATH = Path("Data") / "SoSe26_Case_Study_finalData_Group_38.csv"
-LOGO_PATH = Path("www") / "img" / "logo.svg"
+LOGO_PATH = Path("www") / "img" / "company-logo.png"
+FALLBACK_LOGO_PATH = Path("www") / "img" / "logo.svg"
 CSS_PATH = Path("www") / "style.css"
+COMPANY_NAME = "Vektor Motors"
+LOGO_WIDTH_HEADER = 120
 FONT_REGULAR = Path("www") / "fonts" / "source-sans-3-latin-400-normal.woff2"
 FONT_SEMIBOLD = Path("www") / "fonts" / "source-sans-3-latin-600-normal.woff2"
 
@@ -109,6 +112,84 @@ def _font_face(path: Path, weight: int) -> str:
     """
 
 
+def _image_data_uri(path: Path) -> str:
+    mime_by_suffix = {
+        ".png": "image/png",
+        ".svg": "image/svg+xml",
+        ".jpg": "image/jpeg",
+        ".jpeg": "image/jpeg",
+    }
+    mime = mime_by_suffix.get(path.suffix.lower(), "application/octet-stream")
+    payload = base64.b64encode(path.read_bytes()).decode("ascii")
+    return f"data:{mime};base64,{payload}"
+
+
+def render_sidebar_branding(logo_file: Path) -> None:
+    logo_markup = ""
+    if logo_file.exists():
+        logo_markup = (
+            f'<img src="{_image_data_uri(logo_file)}" '
+            f'alt="{COMPANY_NAME}" class="ida-sidebar-logo" />'
+        )
+
+    st.markdown(
+        f"""
+        <div class="ida-sidebar-branding">
+            <div class="ida-sidebar-logo-wrap">
+                {logo_markup}
+            </div>
+            <p class="ida-sidebar-brand">{COMPANY_NAME}</p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def render_page_header(logo_file: Path) -> None:
+    logo_markup = ""
+    if logo_file.exists():
+        logo_markup = (
+            f'<img src="{_image_data_uri(logo_file)}" '
+            f'alt="{COMPANY_NAME}" class="ida-page-header__logo" '
+            f'style="width: {LOGO_WIDTH_HEADER}px;" />'
+        )
+
+    st.markdown(
+        f"""
+        <header class="ida-page-header">
+            {logo_markup}
+            <div class="ida-page-header__text">
+                <p class="ida-page-header__company">{COMPANY_NAME}</p>
+                <h1 class="ida-page-header__title">Vehicle Popularity Analysis Dashboard</h1>
+            </div>
+        </header>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def render_sidebar_settings_summary(
+    registration_basis: str,
+    period_mode: str,
+    analysis_period_label: str,
+) -> None:
+    st.sidebar.header("Current analysis settings")
+    st.sidebar.markdown(
+        f"""
+**Registration basis:** {registration_basis}  
+**Analysis period:** {period_mode}  
+**Years in analysis:** {analysis_period_label}
+"""
+    )
+    st.sidebar.caption(
+        "A vehicle is classified as defective if the vehicle itself, an installed "
+        "component, or an installed single part is marked defective. A defective "
+        "single part also makes its component defective. Only defects occurring "
+        "after registration are considered."
+    )
+    st.sidebar.divider()
+
+
 def apply_design() -> None:
     font_css = _font_face(FONT_REGULAR, 400) + _font_face(FONT_SEMIBOLD, 600)
     extra = CSS_PATH.read_text(encoding="utf-8") if CSS_PATH.exists() else ""
@@ -145,7 +226,46 @@ def style_fig(fig):
 
 
 def active_count_col(exclude_defective: bool) -> str:
-    return COUNT_CLEAN if exclude_defective else COUNT_ALL ##changed name
+    return COUNT_CLEAN if exclude_defective else COUNT_ALL
+
+
+def methodology_text(
+    analysis_period_label: str,
+    registration_basis: str,
+) -> str:
+    return f"""
+**Popularity metric**  
+We count how many **registered vehicles** contain each component **series**
+(type + manufacturer + plant), summed over the selected analysis period
+(**{analysis_period_label}**) and registration basis (**{registration_basis}**).
+
+**Four recommendation pools (not seven separate winners)**  
+| Pool | Categories | Rule |
+|------|------------|------|
+| Engine | K1 only | Highest registration volume within K1 |
+| Seats | K2 only | Highest registration volume within K2 |
+| Gearbox | K3 only | Highest registration volume within K3 |
+| Body | **K4 + K5 + K6 + K7 together** | Highest registration volume across **all body series** |
+
+K4–K7 are different **body categories**, but a vehicle needs **one body choice**.
+Therefore we compare every body series from K4–K7 in a **single ranking**
+and recommend the overall body leader — not one winner per K4, K5, K6, and K7.
+
+**Most popular vehicle** = top engine + top seats + top gearbox + top body
+(four independent choices by registration volume).
+
+**Ties**  
+If two or more series share the highest count in a pool, all are shown as
+co-leaders (same rank).
+
+**Trends tab**  
+Yearly charts always use the **full dataset period** so long-term fashions
+remain visible. Rankings above respect the analysis-period filter selected above.
+
+**Not validated**  
+We do not check whether the four recommended components can be built together
+on one real vehicle.
+"""
 
 def with_count(df: pd.DataFrame, count_col: str) -> pd.DataFrame:
     """Normalize the active metric to column name n_count for plotting."""
@@ -780,40 +900,31 @@ def plot_trends(
 
 def main() -> None:
     st.set_page_config(
-        page_title="Most popular vehicle | IDA Group 38",
+        page_title="Vehicle Popularity Analysis Dashboard",
         layout="wide",
+        initial_sidebar_state="expanded",
     )
     apply_design()
     df = get_data()
+
+    logo_file = LOGO_PATH if LOGO_PATH.exists() else FALLBACK_LOGO_PATH
+
+    with st.sidebar:
+        render_sidebar_branding(logo_file)
+        st.divider()
 
 
     # ---------------------------------------------------------
     # Header
     # ---------------------------------------------------------
 
-    header_l, header_r = st.columns([5, 1], vertical_alignment="top")
+    render_page_header(logo_file)
 
-    with header_l:
-        st.markdown(
-            """
-            <div class="ida-hero">
-                <h1>Most popular vehicle - component recommendation</h1>
-                <p>
-                    Management briefing based on KBA registrations 2009-2016.
-                    Popularity is counted at <b>series</b> level
-                    (type + manufacturer + plant), e.g. K1BE1-104-1041.
-                </p>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
-    with header_r:
-        if LOGO_PATH.exists():
-            st.image(
-                str(LOGO_PATH),
-                width=180,
-            )
+    st.info(
+        "Use the button :material/keyboard_double_arrow_right: in the top left corner "
+        "to open the sidebar. Use it for analysis settings, calculation methodology, "
+        "and glossary."
+    )
 
 
     # ---------------------------------------------------------
@@ -863,15 +974,6 @@ def main() -> None:
     #         "four component observations.",
     #     )
 
-
-    st.sidebar.header("Analysis settings") ##changed
-    st.sidebar.write(f"**Registration basis:** {mode}")
-    st.sidebar.caption(
-        "A vehicle is classified as defective if the vehicle itself, an installed "
-    "component, or an installed single part is marked defective. A defective "
-    "single part also makes its component defective. Only defects occurring " ##changed
-    "after registration are considered."
-    )
 
     # ---------------------------------------------------------
     # Analysis period
@@ -932,6 +1034,28 @@ def main() -> None:
     else:
         analysis_period_label = (
             f"{analysis_start_year}–{analysis_end_year}"
+        )
+
+    render_sidebar_settings_summary(mode, period_mode, analysis_period_label)
+
+    with st.sidebar.expander("How we calculate popularity and the recommendation"):
+        st.markdown(methodology_text(analysis_period_label, mode))
+
+    with st.sidebar.expander("Glossary"):
+        st.markdown(
+            """
+**Series**  
+Component type + manufacturer + plant (e.g. K1BE1-104-1041).
+
+**Registration volume**  
+Number of registered vehicles containing that series.
+
+**Defect-filtered registrations**  
+Excludes vehicles classified as defective after registration.
+
+**First / last observed registration**  
+First or last year a series appears in the data — not necessarily production start/end.
+"""
         )
 
     overall = overall_counts(
@@ -1047,8 +1171,8 @@ def main() -> None:
             series_names(body_top),
         )
         st.caption(
-            f"{body_share:.1%} of all body registrations"
-        ) ## added
+            f"{body_share:.1%} of K4–K7 body pool"
+        )
 
     engine_ranking = build_ranking(series_kpis, "K1")
     seats_ranking = build_ranking(series_kpis, "K2")
@@ -1079,57 +1203,25 @@ def main() -> None:
 
     if current_slots == 4:
         st.success(
-            f"**Lifecycle check:** all 4 recommendations based on "
-            f"**{analysis_period_label}** have at least one leading series "
-            f"still observed in {latest_year}."
+            f"**Lifecycle check:** all four recommendation slots (K1, K2, K3, "
+            f"body pool K4–K7) based on **{analysis_period_label}** have at least "
+            f"one leading series still observed in {latest_year}."
         )
     else:
         st.warning(
-            f"**Lifecycle check:** only {current_slots} of 4 recommendations "
-            f"based on **{analysis_period_label}** have a leading series still "
-            f"observed in {latest_year}. Historical popularity may therefore "
-            "include series no longer observed at the end of the dataset."
+            f"**Lifecycle check:** only {current_slots} of four recommendation "
+            f"slots (K1, K2, K3, body pool K4–K7) based on **{analysis_period_label}** "
+            f"have a leading series still observed in {latest_year}. Historical "
+            "popularity may include series no longer observed at the end of the dataset."
         )
 
     tab_rec, tab_trend, tab_explore, tab_table = st.tabs(
             ["Recommendation", "Yearly trends", "Explore", "Full data"]
         )
 
-    with st.sidebar.expander("Glossary & methodology"):
-        st.markdown(
-        """
-        **Registration volume**  
-        Number of registered vehicles containing the respective component series.
-
-        **Defect-filtered registrations**  
-        Registrations remaining after vehicles classified as defective under the
-        applied defect rule are excluded.
-
-        **Category**  
-        K1 = engine, K2 = seats, K3 = gearbox. K4–K7 represent the four
-        body categories.                                                                    
-
-        **Series**  
-        Component series defined by component type, manufacturer and plant.
-
-        **First observed registration**  
-        First year in which a series appears in the available registration data.
-        This does not necessarily represent its production start.
-
-        **Last observed registration**  
-        Last year in which a series appears in the available registration data.
-        This does not necessarily represent its production end.
-        """
-        ) ## added
-
     with tab_rec:
         st.subheader("Top component recommendations")
 
-        st.caption(
-            "Series are ranked by registration volume using the selected registration basis. "
-            "Market share refers to the respective recommendation pool. "
-            "Ties are assigned the same rank."
-        )
         rank_engine, rank_seats, rank_gearbox, rank_body = st.tabs(
         [
         "Engine · K1",
@@ -1437,12 +1529,10 @@ def main() -> None:
         st.markdown("#### Popularity-based vehicle recommendation")
 
         st.info(
-            f"Based on registrations in **{analysis_period_label}**, the individually "
-            f"most popular component choices are engine **{recommended_engine}**, "
-            f"seats **{recommended_seats}**, gearbox **{recommended_gearbox}**, "
-            f"and body **{recommended_body}**. "
-            "Components are selected independently based on registration volume. "
-            "Compatibility of the combined specification is not validated."
+            f"**Recommended vehicle ({analysis_period_label}):** "
+            f"**{recommended_engine}** · **{recommended_seats}** · "
+            f"**{recommended_gearbox}** · **{recommended_body}** "
+            f"(engine · seats · gearbox · body)."
         )
 
         c1, c2 = st.columns(2)
@@ -1475,12 +1565,10 @@ def main() -> None:
     with tab_trend:
         st.subheader("Trends and fashions by year")
         st.caption(
-            "A stable winner every year is structural demand. "
-            "A changing winner would be a fashion. "
-            "A green ▲ marks the first observed registration of a "
-            "series within the dataset; a red × marks its last observed registration. "
-            "These markers do not necessarily represent actual production start or "
-            "end dates."
+            "Trends use the **full registration period** (not the analysis-period "
+            "filter above). A stable yearly winner suggests structural demand; a "
+            "changing winner suggests fashion. Green ▲ = first observed registration; "
+            "red × = last observed registration (not necessarily production dates)."
         )
         trend_metric = st.radio(
             "Display metric",
