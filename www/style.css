@@ -16,12 +16,24 @@
   --ida-blue: #5ba4cf;
   --ida-blue-dark: #2f5f7a;
   --ida-blue-soft: #e8f4fa;
+  --ida-blue-line: #c5dceb;
   --ida-text: #1f2d3a;
+  --ida-muted: #4a6a7a;
+  --ida-warn: #8a4b16;
+
+  --ida-fs-page: 1.7rem;      /* ~27px page title */
+  --ida-fs-section: 1.25rem;  /* ~20px section headings */
+  --ida-fs-hero: 1.4rem;      /* ~22px recommended vehicle */
+  --ida-fs-metric: 1.35rem;   /* ~22px metric values */
+  --ida-fs-body: 1rem;        /* 16px */
+  --ida-fs-caption: 0.9rem;   /* ~14px */
+  --ida-fs-label: 0.75rem;    /* ~12px eyebrows */
 }
 
 html, body, [data-testid="stAppViewContainer"] {
   font-family: "Source Sans Pro", "Source Sans 3", Helvetica, Arial, sans-serif;
   color: var(--ida-text);
+  font-size: var(--ida-fs-body);
 }
 
 [data-testid="stHeader"] {
@@ -49,9 +61,68 @@ html, body, [data-testid="stAppViewContainer"] {
   font-family: "Material Symbols Rounded" !important;
 }
 
+/* Typography scale */
+h1,
+[data-testid="stHeading"] h1 {
+  color: var(--ida-blue-dark);
+  font-size: var(--ida-fs-page) !important;
+  font-weight: 600 !important;
+  line-height: 1.2 !important;
+}
+
+h2,
+h3,
+[data-testid="stHeading"] h2,
+[data-testid="stHeading"] h3,
+[data-testid="stMarkdownContainer"] h2,
+[data-testid="stMarkdownContainer"] h3 {
+  color: var(--ida-blue-dark);
+  font-size: var(--ida-fs-section) !important;
+  font-weight: 600 !important;
+  line-height: 1.3 !important;
+}
+
+[data-testid="stCaption"],
+[data-testid="stCaptionContainer"],
+.stCaption,
+.stCaptionContainer,
+small {
+  color: var(--ida-muted) !important;
+  font-size: var(--ida-fs-caption) !important;
+  line-height: 1.4 !important;
+}
+
+div[data-testid="stMetricLabel"],
+div[data-testid="stMetricLabel"] p {
+  font-size: var(--ida-fs-caption) !important;
+  color: var(--ida-muted) !important;
+}
+
+div[data-testid="stMetricValue"],
+div[data-testid="stMetricValue"] * {
+  font-size: var(--ida-fs-metric) !important;
+  font-weight: 600 !important;
+  color: var(--ida-blue-dark) !important;
+  line-height: 1.25 !important;
+}
+
+[data-testid="stWidgetLabel"] p,
+[data-testid="stWidgetLabel"] label {
+  font-size: var(--ida-fs-caption) !important;
+  color: var(--ida-text) !important;
+}
+
+/* Vertical rule between side-by-side analysis filters */
+.ida-filter-divider {
+  border-left: 1px solid var(--ida-blue-line);
+  height: 4.25rem;
+  margin: 1.55rem auto 0;
+  width: 0;
+}
+
 .ida-page-header {
   align-items: center;
-  border-bottom: 1px solid #d4e8f4;
+  border-bottom: 1px solid var(--ida-blue-line);
   display: flex;
   gap: 1rem;
   margin-bottom: 0.75rem;
@@ -80,7 +151,7 @@ html, body, [data-testid="stAppViewContainer"] {
   text-align: left;
   font-family: "Source Sans Pro", "Source Sans 3", Helvetica, Arial, sans-serif;
   color: var(--ida-blue);
-  font-size: 0.78rem;
+  font-size: var(--ida-fs-label);
   font-weight: 600;
   letter-spacing: 0.05em;
   line-height: 1.2;
@@ -94,14 +165,14 @@ html, body, [data-testid="stAppViewContainer"] {
   text-align: left;
   font-family: "Source Sans Pro", "Source Sans 3", Helvetica, Arial, sans-serif;
   color: var(--ida-blue-dark);
-  font-size: 1.85rem;
+  font-size: var(--ida-fs-page);
   font-weight: 600;
   line-height: 1.15;
 }
 
 .ida-page-header__company {
   color: var(--ida-blue);
-  font-size: 0.78rem;
+  font-size: var(--ida-fs-label);
   font-weight: 600;
   letter-spacing: 0.05em;
   line-height: 1.2;
@@ -110,7 +181,7 @@ html, body, [data-testid="stAppViewContainer"] {
 
 .ida-page-header__title {
   color: var(--ida-blue-dark);
-  font-size: 1.85rem;
+  font-size: var(--ida-fs-page);
   font-weight: 600;
   line-height: 1.15;
 }
@@ -145,4 +216,182 @@ html, body, [data-testid="stAppViewContainer"] {
   padding: 0;
   text-align: center;
   text-transform: uppercase;
+}
+
+/* Tighten space under the recommendation hero iframe */
+iframe {
+  display: block;
+}
+
+div[data-testid="stElementContainer"]:has(iframe) {
+  margin-bottom: 0 !important;
+  padding-bottom: 0 !important;
+}
+
+.ida-export-row {
+  margin-top: 0;
+}
+
+div[data-testid="stDownloadButton"] {
+  margin-top: 0.15rem;
+}
+
+div[data-testid="stDownloadButton"] button {
+  border-radius: 0.45rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  min-height: 2.65rem;
+  background: var(--ida-blue-dark) !important;
+  border-color: var(--ida-blue-dark) !important;
+  color: #ffffff !important;
+}
+
+div[data-testid="stDownloadButton"] button:hover {
+  background: #254d63 !important;
+  border-color: #254d63 !important;
+  color: #ffffff !important;
+}
+
+div[data-testid="stDownloadButton"] button svg,
+div[data-testid="stDownloadButton"] button span {
+  color: #ffffff !important;
+  fill: #ffffff !important;
+}
+
+/* Stretch tab bars across full width */
+div[data-testid="stTabs"] [role="tablist"],
+div[data-testid="stTabs"] [data-baseweb="tab-list"] {
+  display: flex !important;
+  gap: 0 !important;
+  width: 100% !important;
+}
+
+div[data-testid="stTabs"] [role="tab"],
+div[data-testid="stTabs"] [data-baseweb="tab"] {
+  flex: 1 1 0 !important;
+  justify-content: center !important;
+  text-align: center !important;
+  color: var(--ida-muted) !important;
+  font-size: var(--ida-fs-caption) !important;
+}
+
+/* Active / hover tabs in brand blue (override Streamlit red) */
+div[data-testid="stTabs"] [role="tab"][aria-selected="true"],
+div[data-testid="stTabs"] [data-baseweb="tab"][aria-selected="true"] {
+  color: var(--ida-blue-dark) !important;
+}
+
+div[data-testid="stTabs"] [role="tab"]:hover,
+div[data-testid="stTabs"] [data-baseweb="tab"]:hover {
+  color: var(--ida-blue) !important;
+}
+
+div[data-testid="stTabs"] [role="tab"][aria-selected="true"]::after,
+div[data-testid="stTabs"] button[aria-selected="true"]::after,
+div[data-testid="stTabs"] [data-baseweb="tab-highlight"],
+div[data-testid="stTabs"] [data-baseweb="tab-border"] {
+  background-color: var(--ida-blue) !important;
+  border-color: var(--ida-blue) !important;
+  color: var(--ida-blue) !important;
+}
+
+div[data-testid="stTabs"] [data-baseweb="tab-highlight"] {
+  height: 3px !important;
+}
+
+/* Radio / checkbox accents in brand blue */
+div[role="radiogroup"] label span[data-testid="stMarkdownContainer"] p {
+  color: var(--ida-text);
+}
+
+div[role="radiogroup"] [data-baseweb="radio"] > div:first-child,
+div[role="radiogroup"] label div[data-testid="stWidgetLabel"] + div {
+  accent-color: var(--ida-blue);
+}
+
+input[type="radio"],
+input[type="checkbox"] {
+  accent-color: var(--ida-blue) !important;
+}
+
+[data-baseweb="radio"] > div:first-child {
+  background-color: var(--ida-blue) !important;
+  border-color: var(--ida-blue) !important;
+}
+
+[data-baseweb="radio"] div[data-testid="stWidgetLabel"] {
+  color: var(--ida-text);
+}
+
+/* Selected radio marker */
+div[role="radiogroup"] label [data-testid="stMarkdownContainer"] {
+  color: var(--ida-text);
+}
+
+[data-baseweb="radio"] > div:first-child span svg,
+[data-testid="stRadio"] [data-baseweb="radio"] > div:first-child svg {
+  fill: var(--ida-blue) !important;
+  color: var(--ida-blue) !important;
+}
+
+/* Help (?) icons: remove thick outline / filament */
+[data-testid="stTooltipHoverTarget"],
+[data-testid="tooltipHoverTarget"],
+[data-testid="stTooltipIcon"] {
+  filter: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+  border: none !important;
+  background: transparent !important;
+}
+
+[data-testid="stTooltipHoverTarget"] svg,
+[data-testid="tooltipHoverTarget"] svg,
+[data-testid="stTooltipIcon"] svg {
+  filter: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+  stroke: var(--ida-blue) !important;
+  stroke-width: 1.4 !important;
+  fill: none !important;
+  color: var(--ida-blue) !important;
+  opacity: 0.85;
+}
+
+[data-testid="stTooltipHoverTarget"] svg circle,
+[data-testid="tooltipHoverTarget"] svg circle,
+[data-testid="stTooltipIcon"] svg circle {
+  stroke: var(--ida-blue) !important;
+  stroke-width: 1.4 !important;
+  fill: var(--ida-blue-soft) !important;
+}
+
+[data-testid="stTooltipHoverTarget"] svg path,
+[data-testid="stTooltipHoverTarget"] svg line,
+[data-testid="tooltipHoverTarget"] svg path,
+[data-testid="tooltipHoverTarget"] svg line,
+[data-testid="stTooltipIcon"] svg path,
+[data-testid="stTooltipIcon"] svg line {
+  stroke: var(--ida-blue-dark) !important;
+  stroke-width: 1.6 !important;
+  fill: none !important;
+}
+
+/* Do not let radio accent rules recolor help icons */
+[data-testid="stRadio"] [data-testid="stTooltipHoverTarget"] svg,
+[data-testid="stRadio"] [data-testid="tooltipHoverTarget"] svg,
+div[data-testid="stMetric"] [data-testid="stTooltipHoverTarget"] svg,
+div[data-testid="stWidgetLabel"] [data-testid="stTooltipHoverTarget"] svg {
+  fill: none !important;
+  color: var(--ida-blue) !important;
+}
+
+/* Slider / focus accents */
+[data-baseweb="slider"] [role="slider"] {
+  background-color: var(--ida-blue) !important;
+}
+
+[data-baseweb="slider"] div[data-testid="stTickBarMin"],
+div[data-baseweb="slider"] > div > div {
+  background-image: linear-gradient(var(--ida-blue), var(--ida-blue)) !important;
 }

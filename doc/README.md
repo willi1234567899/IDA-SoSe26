@@ -1,6 +1,8 @@
 # Project docs
 
 Rough group notes for the IDA final project (SoSe 2026) — **Group 38**.
+
+**Participants:** Mark Prymak, Pascal Diekmeier, Smilla Elisa Eichhorn, Willi Leonard Horn
 Based on the official PDFs: Case Study, General Tasks, Submission Requirements, Evaluation Criteria.
 
 ## Files
@@ -8,11 +10,11 @@ Based on the official PDFs: Case Study, General Tasks, Submission Requirements, 
 | File | What it's for |
 |------|----------------|
 | [architecture.md](architecture.md) | how the pieces fit together |
-| [folder-structure.md](folder-structure.md) | required submission layout |
+| [folder-structure.md](folder-structure.md) | required submission layout + **pre-submission checklist** |
 | [data-model.md](data-model.md) | which data categories exist |
 | [general-tasks.md](general-tasks.md) | General Tasks 1–6 (25 points) |
 | [work-distribution.md](work-distribution.md) | split across 5 people |
-| [milestones.md](milestones.md) | timeline + checklist |
+| [milestones.md](milestones.md) | timeline + status |
 
 ## What we have to deliver
 

@@ -2,10 +2,14 @@
 
 IDA final project – Group **38**.
 
+**Participants:** Mark Prymak, Pascal Diekmeier, Smilla Elisa Eichhorn, Willi Leonard Horn
+
 Planning notes: [`doc/`](doc/README.md)  
 Submission layout / naming: [`doc/folder-structure.md`](doc/folder-structure.md)
 
 **Deadline:** 1 September 2026, 23:59
+
+**Before upload:** see the [pre-submission checklist](doc/folder-structure.md#pre-submission-checklist).
 
 ## Run the case-study app
 

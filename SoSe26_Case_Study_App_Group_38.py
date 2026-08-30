@@ -1,6 +1,9 @@
 """
 SoSe26 Case Study App – Group 38
 
+Participants: Mark Prymak, Pascal Diekmeier, Smilla Elisa Eichhorn,
+Willi Leonard Horn
+
 Run from this folder (Anaconda / project env):
 
     python3 -m streamlit run SoSe26_Case_Study_App_Group_38.py
@@ -12,12 +15,15 @@ The app reads only:
 from __future__ import annotations
 
 import base64
+from io import BytesIO
 from pathlib import Path
 from typing import Optional
 
 import pandas as pd
 import plotly.express as px
 import streamlit as st
+import streamlit.components.v1 as components
+from PIL import Image, ImageDraw, ImageFont
 
 DATA_PATH = Path("Data") / "SoSe26_Case_Study_finalData_Group_38.csv"
 LOGO_PATH = Path("www") / "img" / "company-logo.png"
@@ -28,10 +34,25 @@ LOGO_WIDTH_HEADER = 120
 FONT_REGULAR = Path("www") / "fonts" / "source-sans-3-latin-400-normal.woff2"
 FONT_SEMIBOLD = Path("www") / "fonts" / "source-sans-3-latin-600-normal.woff2"
 
-PLOTLY_BLUES = ["#2F5F7A", "#5BA4CF", "#8FCBE8", "#C5E4F3"]
+# Brand tokens (keep in sync with www/style.css :root)
+BRAND_BLUE = "#5BA4CF"
+BRAND_BLUE_DARK = "#2F5F7A"
+BRAND_BLUE_SOFT = "#E8F4FA"
+BRAND_BLUE_LINE = "#C5DCEB"
+BRAND_TEXT = "#1F2D3A"
+BRAND_MUTED = "#4A6A7A"
+BRAND_WARN = "#8A4B16"
+
+
+def _hex_to_rgb(color: str) -> tuple[int, int, int]:
+    value = color.lstrip("#")
+    return tuple(int(value[i : i + 2], 16) for i in (0, 2, 4))
+
+
+PLOTLY_BLUES = [BRAND_BLUE_DARK, BRAND_BLUE, "#8FCBE8", "#C5E4F3"]
 PLOTLY_COLORS = [
-    "#2F5F7A",
-    "#5BA4CF",
+    BRAND_BLUE_DARK,
+    BRAND_BLUE,
     "#1F7A8C",
     "#6C8EBF",
     "#8A7FB8",
@@ -43,8 +64,8 @@ PLOTLY_COLORS = [
 ]
 
 CATEGORY_COLORS = {
-    "K1": "#2F5F7A",
-    "K2": "#5BA4CF",
+    "K1": BRAND_BLUE_DARK,
+    "K2": BRAND_BLUE,
     "K3": "#1F7A8C",
     "K4": "#6C8EBF",
     "K5": "#8A7FB8",
@@ -73,6 +94,20 @@ SERIES_END_MARKER = dict(
 
 COUNT_ALL = "n_registrations"
 COUNT_CLEAN = "n_registrations_clean"
+
+FINAL_DATA_COLUMN_LABELS = {
+    "year": "Year",
+    "oem": "OEM",
+    "vehicle_type": "Vehicle type",
+    "category": "Category",
+    "component_type": "Component type",
+    "manufacturer": "Manufacturer",
+    "plant": "Plant",
+    "series": "Series",
+    "n_registrations": "Registrations",
+    "n_registrations_clean": "Registrations (defect-filtered)",
+    "label": "Description",
+}
 
 
 @st.cache_data
@@ -181,12 +216,6 @@ def render_sidebar_settings_summary(
 **Years in analysis:** {analysis_period_label}
 """
     )
-    st.sidebar.caption(
-        "A vehicle is classified as defective if the vehicle itself, an installed "
-        "component, or an installed single part is marked defective. A defective "
-        "single part also makes its component defective. Only defects occurring "
-        "after registration are considered."
-    )
     st.sidebar.divider()
 
 
@@ -201,11 +230,11 @@ def apply_design() -> None:
         [data-testid="stSidebar"], .stMarkdown, .stMetric {{
             font-family: "Source Sans Pro", "Source Sans 3", Helvetica, Arial, sans-serif;
         }}
-        [data-testid="stHeader"] {{ background: #E8F4FA; }}
-        [data-testid="stSidebar"] {{ background: #E8F4FA; }}
+        [data-testid="stHeader"] {{ background: {BRAND_BLUE_SOFT}; }}
+        [data-testid="stSidebar"] {{ background: {BRAND_BLUE_SOFT}; }}
         div[data-testid="stMetric"] {{
-            background: #E8F4FA;
-            border-left: 4px solid #5BA4CF;
+            background: {BRAND_BLUE_SOFT};
+            border-left: 4px solid {BRAND_BLUE};
             padding: 0.6rem 0.8rem;
         }}
         {extra}
@@ -517,6 +546,413 @@ def series_names(rows: pd.DataFrame) -> str:
         return "No data"
 
     return " / ".join(rows["series"].tolist())
+
+
+def build_recommendation_export(
+    analysis_period_label: str,
+    registration_basis: str,
+    vehicle_registrations: int,
+    engine_top: pd.DataFrame,
+    seats_top: pd.DataFrame,
+    gearbox_top: pd.DataFrame,
+    body_top: pd.DataFrame,
+    engine_share: float,
+    seats_share: float,
+    gearbox_share: float,
+    body_share: float,
+) -> pd.DataFrame:
+    """One export row per leading series (ties become multiple rows)."""
+
+    def slot_rows(
+        slot: str,
+        rows: pd.DataFrame,
+        share: float,
+        share_label: str,
+    ) -> list[dict]:
+        if rows.empty:
+            return [
+                {
+                    "slot": slot,
+                    "series": "No data",
+                    "market_share": share,
+                    "share_basis": share_label,
+                    "analysis_period": analysis_period_label,
+                    "registration_basis": registration_basis,
+                    "vehicle_registrations": vehicle_registrations,
+                }
+            ]
+
+        out = []
+        for _, row in rows.iterrows():
+            out.append(
+                {
+                    "slot": slot,
+                    "series": row["series"],
+                    "market_share": share,
+                    "share_basis": share_label,
+                    "analysis_period": analysis_period_label,
+                    "registration_basis": registration_basis,
+                    "vehicle_registrations": vehicle_registrations,
+                }
+            )
+        return out
+
+    records: list[dict] = []
+    records.extend(slot_rows("Engine · K1", engine_top, engine_share, "K1"))
+    records.extend(slot_rows("Seats · K2", seats_top, seats_share, "K2"))
+    records.extend(slot_rows("Gearbox · K3", gearbox_top, gearbox_share, "K3"))
+    records.extend(
+        slot_rows("Body · K4–K7", body_top, body_share, "K4–K7 body pool")
+    )
+    return pd.DataFrame.from_records(records)
+
+
+def dataframe_to_excel_bytes(df: pd.DataFrame, sheet_name: str = "Recommendation") -> bytes:
+    buffer = BytesIO()
+    with pd.ExcelWriter(buffer, engine="openpyxl") as writer:
+        df.to_excel(writer, index=False, sheet_name=sheet_name)
+    return buffer.getvalue()
+
+
+def _load_export_font(size: int, bold: bool = False) -> ImageFont.ImageFont:
+    candidates = [
+        "/System/Library/Fonts/Supplemental/Arial Bold.ttf" if bold else "/System/Library/Fonts/Supplemental/Arial.ttf",
+        "/Library/Fonts/Arial Bold.ttf" if bold else "/Library/Fonts/Arial.ttf",
+        "/System/Library/Fonts/Supplemental/Arial.ttf",
+        "DejaVuSans-Bold.ttf" if bold else "DejaVuSans.ttf",
+    ]
+    for path in candidates:
+        try:
+            return ImageFont.truetype(path, size=size)
+        except OSError:
+            continue
+    return ImageFont.load_default()
+
+
+def _wrap_text(
+    draw: ImageDraw.ImageDraw,
+    text: str,
+    font: ImageFont.ImageFont,
+    max_width: int,
+) -> list[str]:
+    words = text.split()
+    if not words:
+        return [""]
+
+    lines: list[str] = []
+    current = words[0]
+    for word in words[1:]:
+        trial = f"{current} {word}"
+        if draw.textlength(trial, font=font) <= max_width:
+            current = trial
+        else:
+            lines.append(current)
+            current = word
+    lines.append(current)
+    return lines
+
+
+def recommendation_to_jpeg_bytes(
+    analysis_period_label: str,
+    registration_basis: str,
+    exclude_defective: bool,
+    slots: list[tuple[str, str, str]],
+    vehicle_registrations: int,
+) -> bytes:
+    """Render a stakeholder-friendly JPEG of the recommended vehicle card."""
+
+    width = 1400
+    padding = 36
+    accent = _hex_to_rgb(BRAND_BLUE)
+    soft = _hex_to_rgb(BRAND_BLUE_SOFT)
+    dark = _hex_to_rgb(BRAND_BLUE_DARK)
+    muted = _hex_to_rgb(BRAND_MUTED)
+    warn = _hex_to_rgb(BRAND_WARN)
+    white = (255, 255, 255)
+    divider_rgb = _hex_to_rgb(BRAND_BLUE_LINE)
+
+    title_font = _load_export_font(42, bold=True)
+    meta_font = _load_export_font(22)
+    label_font = _load_export_font(18, bold=True)
+    series_font = _load_export_font(24, bold=True)
+    share_font = _load_export_font(18)
+    footer_label_font = _load_export_font(20, bold=True)
+    footer_value_font = _load_export_font(34, bold=True)
+
+    # Probe height with a temporary image.
+    probe = Image.new("RGB", (width, 100), white)
+    probe_draw = ImageDraw.Draw(probe)
+
+    content_width = width - 2 * padding - 10
+    slot_gap = 24
+    slot_width = (content_width - 3 * slot_gap) // 4
+    slot_heights = []
+    for label, series, share in slots:
+        wrapped = _wrap_text(probe_draw, series, series_font, slot_width - 8)
+        slot_heights.append(28 + 8 + len(wrapped) * 30 + 8 + 24)
+
+    filter_extra = 36 if exclude_defective else 0
+    body_top = padding + 56 + 34 + filter_extra
+    slots_height = max(slot_heights) if slot_heights else 80
+    height = body_top + slots_height + 28 + 70 + padding
+
+    img = Image.new("RGB", (width, height), white)
+    draw = ImageDraw.Draw(img)
+
+    # Card background + left accent.
+    draw.rectangle((0, 0, width, height), fill=soft)
+    draw.rectangle((0, 0, 10, height), fill=accent)
+
+    x = padding + 10
+    y = padding
+    draw.text((x, y), "Recommended vehicle", font=title_font, fill=dark)
+    y += 56
+    draw.text(
+        (x, y),
+        f"Analysis period · {analysis_period_label} · {registration_basis}",
+        font=meta_font,
+        fill=muted,
+    )
+    y += 34
+    if exclude_defective:
+        draw.text(
+            (x, y),
+            "Defect filter active — rankings exclude defective vehicles.",
+            font=meta_font,
+            fill=warn,
+        )
+        y += 36
+
+    for i, (label, series, share) in enumerate(slots):
+        sx = x + i * (slot_width + slot_gap)
+        sy = y
+        draw.text((sx, sy), label.upper(), font=label_font, fill=muted)
+        sy += 28
+        for text_line in _wrap_text(draw, series, series_font, slot_width - 8):
+            draw.text((sx, sy), text_line, font=series_font, fill=dark)
+            sy += 30
+        draw.text((sx, sy + 4), share, font=share_font, fill=muted)
+
+    y = body_top + slots_height + 18
+    draw.line((x, y, width - padding, y), fill=divider_rgb, width=2)
+    y += 18
+    draw.text((x, y + 8), "Vehicle registrations", font=footer_label_font, fill=muted)
+    value_x = x + int(draw.textlength("Vehicle registrations", font=footer_label_font)) + 18
+    draw.text((value_x, y), f"{vehicle_registrations:,}", font=footer_value_font, fill=dark)
+
+    buffer = BytesIO()
+    img.save(buffer, format="JPEG", quality=92, optimize=True)
+    return buffer.getvalue()
+
+
+def render_recommendation_hero(
+    analysis_period_label: str,
+    registration_basis: str,
+    exclude_defective: bool,
+    engine_top: pd.DataFrame,
+    seats_top: pd.DataFrame,
+    gearbox_top: pd.DataFrame,
+    body_top: pd.DataFrame,
+    engine_share: float,
+    seats_share: float,
+    gearbox_share: float,
+    body_share: float,
+    vehicle_registrations: int,
+) -> None:
+    slots = [
+        ("Engine · K1", series_names(engine_top), f"{engine_share:.1%} of K1 registrations"),
+        ("Seats · K2", series_names(seats_top), f"{seats_share:.1%} of K2 registrations"),
+        ("Gearbox · K3", series_names(gearbox_top), f"{gearbox_share:.1%} of K3 registrations"),
+        ("Body · K4–K7", series_names(body_top), f"{body_share:.1%} of K4–K7 body pool"),
+    ]
+
+    slot_html = "".join(
+        (
+            '<div class="slot">'
+            f'<p class="slot-label">{label}</p>'
+            f'<p class="slot-series">{series}</p>'
+            f'<p class="slot-share">{share}</p>'
+            "</div>"
+        )
+        for label, series, share in slots
+    )
+
+    filter_html = ""
+    if exclude_defective:
+        filter_html = (
+            '<p class="rec-filter">'
+            "Defect filter active — rankings exclude defective vehicles. "
+            "Details: see Glossary."
+            "</p>"
+        )
+
+    hero_height = 248 if exclude_defective else 218
+
+    # Render as an HTML component so Streamlit markdown cannot break nested tags.
+    components.html(
+        f"""
+        <style>
+          html, body {{
+            margin: 0;
+            padding: 0;
+          }}
+          .rec-hero {{
+            background: {BRAND_BLUE_SOFT};
+            border-left: 4px solid {BRAND_BLUE};
+            box-sizing: border-box;
+            color: {BRAND_TEXT};
+            font-family: "Source Sans Pro", "Source Sans 3", Helvetica, Arial, sans-serif;
+            padding: 1rem 1.15rem 1rem;
+          }}
+          .rec-title {{
+            color: {BRAND_BLUE_DARK};
+            font-size: 1.4rem;
+            font-weight: 600;
+            line-height: 1.2;
+            margin: 0 0 0.2rem;
+          }}
+          .rec-period {{
+            color: {BRAND_MUTED};
+            font-size: 0.9rem;
+            margin: 0 0 0.45rem;
+          }}
+          .rec-filter {{
+            color: {BRAND_WARN};
+            font-size: 0.88rem;
+            font-weight: 600;
+            margin: 0 0 0.85rem;
+          }}
+          .rec-slots {{
+            display: grid;
+            gap: 0.85rem 1.25rem;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+          }}
+          .slot-label {{
+            color: {BRAND_MUTED};
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 0.03em;
+            margin: 0 0 0.2rem;
+            text-transform: uppercase;
+          }}
+          .slot-series {{
+            color: {BRAND_BLUE_DARK};
+            font-size: 1rem;
+            font-weight: 600;
+            line-height: 1.35;
+            margin: 0 0 0.2rem;
+            overflow-wrap: anywhere;
+            word-break: break-word;
+          }}
+          .slot-share {{
+            color: {BRAND_MUTED};
+            font-size: 0.85rem;
+            margin: 0;
+          }}
+          .rec-divider {{
+            border: 0;
+            border-top: 1px solid {BRAND_BLUE_LINE};
+            margin: 1rem 0 0.85rem;
+          }}
+          .rec-regs {{
+            align-items: baseline;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.35rem 0.85rem;
+          }}
+          .rec-regs-label {{
+            color: {BRAND_MUTED};
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin: 0;
+          }}
+          .rec-regs-value {{
+            color: {BRAND_BLUE_DARK};
+            font-size: 1.35rem;
+            font-weight: 600;
+            margin: 0;
+          }}
+          @media (max-width: 900px) {{
+            .rec-slots {{
+              grid-template-columns: repeat(2, minmax(0, 1fr));
+            }}
+          }}
+        </style>
+        <div class="rec-hero">
+          <p class="rec-title">Recommended vehicle</p>
+          <p class="rec-period">
+            Analysis period · {analysis_period_label}
+            · {registration_basis}
+          </p>
+          {filter_html}
+          <div class="rec-slots">{slot_html}</div>
+          <hr class="rec-divider" />
+          <div class="rec-regs">
+            <p class="rec-regs-label">Vehicle registrations</p>
+            <p class="rec-regs-value">{vehicle_registrations:,}</p>
+          </div>
+        </div>
+        """,
+        height=hero_height,
+        scrolling=False,
+    )
+
+    export_df = build_recommendation_export(
+        analysis_period_label=analysis_period_label,
+        registration_basis=registration_basis,
+        vehicle_registrations=vehicle_registrations,
+        engine_top=engine_top,
+        seats_top=seats_top,
+        gearbox_top=gearbox_top,
+        body_top=body_top,
+        engine_share=engine_share,
+        seats_share=seats_share,
+        gearbox_share=gearbox_share,
+        body_share=body_share,
+    )
+
+    jpeg_bytes = recommendation_to_jpeg_bytes(
+        analysis_period_label=analysis_period_label,
+        registration_basis=registration_basis,
+        exclude_defective=exclude_defective,
+        slots=slots,
+        vehicle_registrations=vehicle_registrations,
+    )
+
+    period_slug = (
+        analysis_period_label.replace("–", "-").replace(" ", "")
+    )
+    mode_slug = "exclude-defective" if exclude_defective else "all-registrations"
+    base_name = f"recommended_vehicle_{period_slug}_{mode_slug}"
+
+    st.markdown('<div class="ida-export-row">', unsafe_allow_html=True)
+    excel_col, jpeg_col = st.columns(2)
+    with excel_col:
+        st.download_button(
+            label="Export Excel",
+            data=dataframe_to_excel_bytes(export_df),
+            file_name=f"{base_name}.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            help="Download the recommended vehicle slots and settings as an Excel file.",
+            key=f"export_recommendation_xlsx_{mode_slug}_{period_slug}",
+            type="primary",
+            icon=":material/table:",
+            width="stretch",
+        )
+    with jpeg_col:
+        st.download_button(
+            label="Export JPEG",
+            data=jpeg_bytes,
+            file_name=f"{base_name}.jpg",
+            mime="image/jpeg",
+            help="Download a JPEG image of the recommended vehicle card.",
+            key=f"export_recommendation_jpeg_{mode_slug}_{period_slug}",
+            type="primary",
+            icon=":material/image:",
+            width="stretch",
+        )
+    st.markdown("</div>", unsafe_allow_html=True)
+
 
 def build_ranking(
     kpis: pd.DataFrame,
@@ -928,12 +1364,15 @@ def main() -> None:
 
 
     # ---------------------------------------------------------
-    # Registration basis
+    # Registration basis + analysis period (side by side)
     # ---------------------------------------------------------
 
-    settings_l, settings_r = st.columns([5, 1])
+    data_start_year = int(df["year"].min())
+    data_end_year = int(df["year"].max())
 
-    with settings_l:
+    filt_l, filt_div, filt_r = st.columns([1, 0.04, 1], gap="medium")
+
+    with filt_l:
         mode = st.radio(
             "Registration basis",
             options=[
@@ -945,59 +1384,38 @@ def main() -> None:
             key="defect_mode",
             help=(
                 "All registrations: use all registered vehicles. "
-                "Exclude defective vehicles: remove vehicles classified as defective "
-                "under the applied defect rule. Only defects occurring after "
-                "registration are considered."
+                "Exclude defective vehicles: remove vehicles classified as defective. "
+                "Full definition of defectiveness: see Glossary in the sidebar."
             ),
         )
 
-        exclude_defective = mode == "Exclude defective vehicles"
-        count_col = active_count_col(exclude_defective)
-        mode_tag = "clean" if exclude_defective else "all"
+    with filt_div:
+        st.markdown(
+            '<div class="ida-filter-divider" aria-hidden="true"></div>',
+            unsafe_allow_html=True,
+        )
 
-        if exclude_defective:
-            st.info(
-                "**Defect filtering active:** vehicles classified as defective under "
-                "the applied defect rule are excluded. Only defects occurring after "
-                "registration are considered."
-            )
-        else:
-            st.caption(
-                "**All registrations:** no vehicles are excluded based on defect information."
-            )
-    # with total_col:
-    #     st.metric(
-    #         "Component observations", ##changed name
-    #         f"{int(df[count_col].sum()):,}",
-    #         help="Sum of registered component occurrences across engine, seats, "
-    #         "gearbox and body. Each registered vehicle normally contributes "
-    #         "four component observations.",
-    #     )
+    with filt_r:
+        period_mode = st.radio(
+            "Analysis period",
+            options=[
+                "Full period",
+                "Latest year",
+                "Custom period",
+            ],
+            index=0,
+            horizontal=True,
+            key="analysis_period_mode",
+            help=(
+                "Full period: analyse all available registration years. "
+                "Latest year: analyse only the most recent year in the dataset. "
+                "Custom period: select a specific year range."
+            ),
+        )
 
-
-    # ---------------------------------------------------------
-    # Analysis period
-    # ---------------------------------------------------------
-
-    data_start_year = int(df["year"].min())
-    data_end_year = int(df["year"].max())
-
-    period_mode = st.radio(
-        "Analysis period",
-        options=[
-            "Full period",
-            "Latest year",
-            "Custom period",
-        ],
-        index=0,
-        horizontal=True,
-        key="analysis_period_mode",
-        help=(
-            "Full period: analyse all available registration years. "
-            "Latest year: analyse only the most recent year in the dataset. "
-            "Custom period: select a specific year range."
-        ),
-    )
+    exclude_defective = mode == "Exclude defective vehicles"
+    count_col = active_count_col(exclude_defective)
+    mode_tag = "clean" if exclude_defective else "all"
 
     if period_mode == "Full period":
         analysis_start_year = data_start_year
@@ -1050,11 +1468,32 @@ Component type + manufacturer + plant (e.g. K1BE1-104-1041).
 **Registration volume**  
 Number of registered vehicles containing that series.
 
+**Defective vehicle**  
+A vehicle is classified as defective if the vehicle itself, an installed
+component, or an installed single part is marked defective. A defective
+single part also makes its component defective. Only defects occurring
+after registration are considered. Pre-registration defects are treated
+as production issues and ignored for this registration-based analysis.
+
 **Defect-filtered registrations**  
-Excludes vehicles classified as defective after registration.
+Registration counts after excluding defective vehicles
+(see *Defective vehicle*).
 
 **First / last observed registration**  
 First or last year a series appears in the data — not necessarily production start/end.
+
+**Lifecycle check**  
+For each of the four recommended slots (engine, seats, gearbox, body), we check
+whether at least one leading series from the selected analysis period still has
+registrations in the latest year of the full dataset. If a leader is no longer
+observed there, the recommendation may reflect a historically popular series
+that is no longer present at the end of the data.
+
+**Export recommendation**  
+Below the Recommended vehicle card you can download the current result:
+- **Excel** — table of recommended slots (series, market share, analysis period,
+  registration basis, vehicle registrations). Tied leaders appear as separate rows.
+- **JPEG** — image of the Recommended vehicle card for slides or reports.
 """
         )
 
@@ -1127,52 +1566,20 @@ First or last year a series appears in the data — not necessarily production s
 
     st.subheader("Executive summary")
 
-    summary_cols = st.columns(5)
-
-    with summary_cols[0]:
-        st.metric(
-            "Vehicle registrations",
-            f"{vehicle_registrations:,}",
-        )
-        st.caption(
-            f"Selected analysis period · {analysis_period_label}"
-        )
-
-    with summary_cols[1]:
-        st.metric(
-            "Top engine",
-            series_names(engine_top),
-        )
-        st.caption(
-            f"{engine_share:.1%} of K1 registrations"
-        )
-
-    with summary_cols[2]:
-        st.metric(
-            "Top seats",
-            series_names(seats_top),
-        )
-        st.caption(
-            f"{seats_share:.1%} of K2 registrations"
-        )
-
-    with summary_cols[3]:
-        st.metric(
-            "Top gearbox",
-            series_names(gearbox_top),
-        )
-        st.caption(
-            f"{gearbox_share:.1%} of K3 registrations"
-        )
-
-    with summary_cols[4]:
-        st.metric(
-            "Top body",
-            series_names(body_top),
-        )
-        st.caption(
-            f"{body_share:.1%} of K4–K7 body pool"
-        )
+    render_recommendation_hero(
+        analysis_period_label=analysis_period_label,
+        registration_basis=mode,
+        exclude_defective=exclude_defective,
+        engine_top=engine_top,
+        seats_top=seats_top,
+        gearbox_top=gearbox_top,
+        body_top=body_top,
+        engine_share=engine_share,
+        seats_share=seats_share,
+        gearbox_share=gearbox_share,
+        body_share=body_share,
+        vehicle_registrations=vehicle_registrations,
+    )
 
     engine_ranking = build_ranking(series_kpis, "K1")
     seats_ranking = build_ranking(series_kpis, "K2")
@@ -1205,14 +1612,16 @@ First or last year a series appears in the data — not necessarily production s
         st.success(
             f"**Lifecycle check:** all four recommendation slots (K1, K2, K3, "
             f"body pool K4–K7) based on **{analysis_period_label}** have at least "
-            f"one leading series still observed in {latest_year}."
+            f"one leading series still observed in {latest_year}. "
+            "Details: see Glossary."
         )
     else:
         st.warning(
             f"**Lifecycle check:** only {current_slots} of four recommendation "
             f"slots (K1, K2, K3, body pool K4–K7) based on **{analysis_period_label}** "
             f"have a leading series still observed in {latest_year}. Historical "
-            "popularity may include series no longer observed at the end of the dataset."
+            "popularity may include series no longer observed at the end of the dataset. "
+            "Details: see Glossary."
         )
 
     tab_rec, tab_trend, tab_explore, tab_table = st.tabs(
@@ -1221,6 +1630,12 @@ First or last year a series appears in the data — not necessarily production s
 
     with tab_rec:
         st.subheader("Top component recommendations")
+        st.caption(
+            "This page shows the ranking detail behind the recommended vehicle: "
+            "leaders and runners-up by registration volume for engine, seats, "
+            "gearbox, and body. Use the category tabs for tables and KPIs; the "
+            "charts below compare series within each pool."
+        )
 
         rank_engine, rank_seats, rank_gearbox, rank_body = st.tabs(
         [
@@ -1499,42 +1914,6 @@ First or last year a series appears in the data — not necessarily production s
                 hide_index=True,
             )
 
-        recommended_engine = series_names(
-            engine_ranking[
-                engine_ranking["display_rank"] == 1
-            ]
-        )
-
-        recommended_seats = series_names(
-            seats_ranking[
-                seats_ranking["display_rank"] == 1
-            ]
-        )
-
-        recommended_gearbox = series_names(
-            gearbox_ranking[
-                gearbox_ranking["display_rank"] == 1
-            ]
-        )
-
-        recommended_body = series_names(
-            body_ranking[
-                body_ranking["display_rank"] == 1
-            ]
-        )
-        # k1_txt = " or ".join(k1["series"].tolist())
-        # k2_txt = " or ".join(k2["series"].tolist())
-        # k3_txt = " or ".join(k3["series"].tolist())
-
-        st.markdown("#### Popularity-based vehicle recommendation")
-
-        st.info(
-            f"**Recommended vehicle ({analysis_period_label}):** "
-            f"**{recommended_engine}** · **{recommended_seats}** · "
-            f"**{recommended_gearbox}** · **{recommended_body}** "
-            f"(engine · seats · gearbox · body)."
-        )
-
         c1, c2 = st.columns(2)
         with c1:
             st.plotly_chart(
@@ -1617,6 +1996,12 @@ First or last year a series appears in the data — not necessarily production s
 
     with tab_explore:
         st.subheader("Filter the registration counts")
+        st.caption(
+            "Explore the underlying registration data with your own filters. "
+            "Choose years, OEMs, and categories to rebuild the bar chart and table. "
+            "Counts follow the current Registration basis selected above "
+            "(all registrations or exclude defective vehicles)."
+        )
         years = sorted(df["year"].unique().tolist())
         y0, y1 = st.slider(
             "Years",
@@ -1644,6 +2029,11 @@ First or last year a series appears in the data — not necessarily production s
             .rename(columns={count_col: "n_count"})
             .sort_values("n_count", ascending=False)
         )
+        registrations_label = (
+            "Registrations (defect-filtered)"
+            if exclude_defective
+            else "Registrations"
+        )
         fig = px.bar(
             agg,
             x="series",
@@ -1652,7 +2042,7 @@ First or last year a series appears in the data — not necessarily production s
             title="Filtered registrations by component series",
             labels={
                 "series": "Component series",
-                "n_count": "Registered vehicles",
+                "n_count": registrations_label,
                 "category": "Category",
             },
             color_discrete_map=CATEGORY_COLORS,
@@ -1661,8 +2051,20 @@ First or last year a series appears in the data — not necessarily production s
         st.plotly_chart(
             style_fig(fig), width="stretch", key=f"explore_bars_{mode_tag}"
         )
+
+        explore_display = agg.rename(
+            columns={
+                "category": "Category",
+                "series": "Series",
+                "component_type": "Component type",
+                "manufacturer": "Manufacturer",
+                "plant": "Plant",
+                "label": "Description",
+                "n_count": registrations_label,
+            }
+        )
         st.dataframe(
-            agg.rename(columns={"n_count": "n_registrations"}),
+            explore_display,
             width="stretch",
             hide_index=True,
             key=f"explore_table_{mode_tag}",
@@ -1671,14 +2073,38 @@ First or last year a series appears in the data — not necessarily production s
     with tab_table:
         st.subheader("Final dataset (all rows)")
         st.caption(
-            f"Source: `{DATA_PATH}` · {len(df):,} rows. "
-            "This is the only file the app reads. "
-            "`n_registrations` = all vehicles; "
-            "`n_registrations_clean` = excluding defective vehicles "
-            "(after registration)."
+            "Audit view of the complete final dataset used by this app "
+            f"(`{DATA_PATH}` · {len(df):,} rows). "
+            "Every chart and recommendation above is built only from these rows. "
+            "**Registrations** = all registered vehicles; "
+            "**Registrations (defect-filtered)** = excluding defective vehicles "
+            "(after registration — see Glossary)."
         )
+
+        full_display = df.rename(
+            columns={
+                col: FINAL_DATA_COLUMN_LABELS.get(col, col)
+                for col in df.columns
+            }
+        )
+
+        st.download_button(
+            label="Export Excel",
+            data=dataframe_to_excel_bytes(full_display, sheet_name="Final data"),
+            file_name="SoSe26_Case_Study_finalData_Group_38.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            help="Download the full final dataset with readable column names as Excel.",
+            key=f"export_full_data_{mode_tag}",
+            type="primary",
+            icon=":material/table:",
+            width="stretch",
+        )
+
         st.dataframe(
-            df, width="stretch", hide_index=True, key=f"full_table_{mode_tag}"
+            full_display,
+            width="stretch",
+            hide_index=True,
+            key=f"full_table_{mode_tag}",
         )
 
 
