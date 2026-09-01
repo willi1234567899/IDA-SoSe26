@@ -7,12 +7,11 @@ Rebuild SoSe26_Case_Study_finalData_Group_38.csv with dual registration counts:
 
 from __future__ import annotations
 
-from pathlib import Path
 
 import pandas as pd
 
-from defect_pipeline import (BOM_FILES, DATA_DIR, DEFECT_IDS_PATH,
-    build_defective_vehicle_ids, load_defective_vehicle_ids)
+from defect_pipeline import (DATA_DIR, DEFECT_IDS_PATH,
+                             build_defective_vehicle_ids, load_defective_vehicle_ids)
 
 FINAL_CSV = DATA_DIR / "SoSe26_Case_Study_finalData_Group_38.csv"
 
@@ -36,13 +35,16 @@ TYPE_LABEL = {
 }
 
 BOM_META = [("Fahrzeug/Bestandteile_Fahrzeuge_OEM1_Typ11.csv", "OEM1", "Typ11"),
-    ("Fahrzeug/Bestandteile_Fahrzeuge_OEM1_Typ12.csv", "OEM1", "Typ12"),
-    ("Fahrzeug/Bestandteile_Fahrzeuge_OEM2_Typ21.csv", "OEM2", "Typ21"),
-    ("Fahrzeug/Bestandteile_Fahrzeuge_OEM2_Typ22.csv", "OEM2", "Typ22")]
+            ("Fahrzeug/Bestandteile_Fahrzeuge_OEM1_Typ12.csv", "OEM1", "Typ12"),
+            ("Fahrzeug/Bestandteile_Fahrzeuge_OEM2_Typ21.csv", "OEM2", "Typ21"),
+            ("Fahrzeug/Bestandteile_Fahrzeuge_OEM2_Typ22.csv", "OEM2", "Typ22")]
 
-SLOTS = [("ID_Motor", "K1"),("ID_Sitze", "K2"),("ID_Schaltung", "K3"),("ID_Karosserie", "body")]
+SLOTS = [("ID_Motor", "K1"), ("ID_Sitze", "K2"),
+         ("ID_Schaltung", "K3"), ("ID_Karosserie", "body")]
+
 
 def parse_component_id(series: pd.Series) -> pd.DataFrame:
+    """Split component IDs into type, manufacturer, plant, and series columns."""
     parts = series.astype(str).str.split("-", n=3, expand=True)
     out = pd.DataFrame(
         {
@@ -51,10 +53,13 @@ def parse_component_id(series: pd.Series) -> pd.DataFrame:
             "plant": parts[2],
         }
     )
-    out["series"] = out["component_type"] + "-" + out["manufacturer"] + "-" + out["plant"]
+    out["series"] = out["component_type"] + "-" + \
+        out["manufacturer"] + "-" + out["plant"]
     return out
 
+
 def rebuild_final_csv(defective: set[str] | None = None) -> pd.DataFrame:
+    """Aggregate registrations per series and write the final case-study CSV."""
     if defective is None:
         if DEFECT_IDS_PATH.exists():
             defective = load_defective_vehicle_ids()
@@ -66,7 +71,8 @@ def rebuild_final_csv(defective: set[str] | None = None) -> pd.DataFrame:
     with open(zul_path, "rb") as f:
         head = f.read(200).decode("utf-8", errors="replace")
     sep = ";" if head.count(";") > head.count(",") else ","
-    zul = pd.read_csv(zul_path, sep=sep, usecols=["IDNummer", "Zulassung"], dtype={"IDNummer": str})
+    zul = pd.read_csv(zul_path, sep=sep, usecols=[
+                      "IDNummer", "Zulassung"], dtype={"IDNummer": str})
     zul["year"] = pd.to_datetime(zul["Zulassung"], errors="coerce").dt.year
     zul = zul.dropna(subset=["year"])
     zul["year"] = zul["year"].astype(int)
@@ -77,10 +83,12 @@ def rebuild_final_csv(defective: set[str] | None = None) -> pd.DataFrame:
         bom_one = pd.read_csv(
             DATA_DIR / rel,
             sep=";",
-            usecols=["ID_Fahrzeug", "ID_Karosserie", "ID_Schaltung", "ID_Sitze", "ID_Motor"],
+            usecols=["ID_Fahrzeug", "ID_Karosserie",
+                     "ID_Schaltung", "ID_Sitze", "ID_Motor"],
             dtype=str,
         )
-        m = bom_one.merge(zul_slim, left_on="ID_Fahrzeug", right_on="IDNummer", how="inner")
+        m = bom_one.merge(zul_slim, left_on="ID_Fahrzeug",
+                          right_on="IDNummer", how="inner")
         m["is_clean"] = ~m["ID_Fahrzeug"].isin(defective)
         for col, default_cat in SLOTS:
             parsed = parse_component_id(m[col])
@@ -96,7 +104,10 @@ def rebuild_final_csv(defective: set[str] | None = None) -> pd.DataFrame:
                     "is_clean": m["is_clean"].values,
                 }
             )
-            out["category"] = out["component_type"] if default_cat == "body" else default_cat
+            if default_cat == "body":
+                out["category"] = out["component_type"]
+            else:
+                out["category"] = default_cat
             g = (
                 out.groupby(
                     [
@@ -144,11 +155,13 @@ def rebuild_final_csv(defective: set[str] | None = None) -> pd.DataFrame:
     print(f"Wrote {FINAL_CSV} ({len(final)} rows)", flush=True)
     return final
 
+
 if __name__ == "__main__":
     import argparse
 
     p = argparse.ArgumentParser()
-    p.add_argument("--rebuild-defects", action="store_true", help="recompute defective vehicle IDs")
+    p.add_argument("--rebuild-defects", action="store_true",
+                   help="recompute defective vehicle IDs")
     args = p.parse_args()
     if args.rebuild_defects or not DEFECT_IDS_PATH.exists():
         build_defective_vehicle_ids(save=True)

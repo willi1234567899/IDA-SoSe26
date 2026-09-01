@@ -46,7 +46,7 @@ BRAND_WARN = "#8A4B16"
 
 def _hex_to_rgb(color: str) -> tuple[int, int, int]:
     value = color.lstrip("#")
-    return tuple(int(value[i : i + 2], 16) for i in (0, 2, 4))
+    return tuple(int(value[i: i + 2], 16) for i in (0, 2, 4))
 
 
 PLOTLY_BLUES = [BRAND_BLUE_DARK, BRAND_BLUE, "#8FCBE8", "#C5E4F3"]
@@ -133,6 +133,7 @@ def get_data() -> pd.DataFrame:
     mtime = DATA_PATH.stat().st_mtime if DATA_PATH.exists() else 0.0
     return load_data(mtime)
 
+
 def _font_face(path: Path, weight: int) -> str:
     if not path.exists():
         return ""
@@ -195,7 +196,9 @@ def render_page_header(logo_file: Path) -> None:
             {logo_markup}
             <div class="ida-page-header__text">
                 <p class="ida-page-header__company">{COMPANY_NAME}</p>
-                <h1 class="ida-page-header__title">Vehicle Popularity Analysis Dashboard</h1>
+                <h1 class="ida-page-header__title">
+                    Vehicle Popularity Analysis Dashboard
+                </h1>
             </div>
         </header>
         """,
@@ -211,8 +214,8 @@ def render_sidebar_settings_summary(
     st.sidebar.header("Current analysis settings")
     st.sidebar.markdown(
         f"""
-**Registration basis:** {registration_basis}  
-**Analysis period:** {period_mode}  
+**Registration basis:** {registration_basis}
+**Analysis period:** {period_mode}
 **Years in analysis:** {analysis_period_label}
 """
     )
@@ -228,7 +231,8 @@ def apply_design() -> None:
         {font_css}
         html, body, [data-testid="stAppViewContainer"],
         [data-testid="stSidebar"], .stMarkdown, .stMetric {{
-            font-family: "Source Sans Pro", "Source Sans 3", Helvetica, Arial, sans-serif;
+            font-family: "Source Sans Pro", "Source Sans 3",
+                Helvetica, Arial, sans-serif;
         }}
         [data-testid="stHeader"] {{ background: {BRAND_BLUE_SOFT}; }}
         [data-testid="stSidebar"] {{ background: {BRAND_BLUE_SOFT}; }}
@@ -263,18 +267,18 @@ def methodology_text(
     registration_basis: str,
 ) -> str:
     return f"""
-**Popularity metric**  
+**Popularity metric**
 We count how many **registered vehicles** contain each component **series**
 (type + manufacturer + plant), summed over the selected analysis period
 (**{analysis_period_label}**) and registration basis (**{registration_basis}**).
 
-**Four recommendation pools (not seven separate winners)**  
+**Four recommendation pools (not seven separate winners)**
 | Pool | Categories | Rule |
 |------|------------|------|
 | Engine | K1 only | Highest registration volume within K1 |
 | Seats | K2 only | Highest registration volume within K2 |
 | Gearbox | K3 only | Highest registration volume within K3 |
-| Body | **K4 + K5 + K6 + K7 together** | Highest registration volume across **all body series** |
+| Body | **K4 + K5 + K6 + K7 together** | Top volume across all body series |
 
 K4–K7 are different **body categories**, but a vehicle needs **one body choice**.
 Therefore we compare every body series from K4–K7 in a **single ranking**
@@ -283,18 +287,19 @@ and recommend the overall body leader — not one winner per K4, K5, K6, and K7.
 **Most popular vehicle** = top engine + top seats + top gearbox + top body
 (four independent choices by registration volume).
 
-**Ties**  
+**Ties**
 If two or more series share the highest count in a pool, all are shown as
 co-leaders (same rank).
 
-**Trends tab**  
+**Trends tab**
 Yearly charts always use the **full dataset period** so long-term fashions
 remain visible. Rankings above respect the analysis-period filter selected above.
 
-**Not validated**  
+**Not validated**
 We do not check whether the four recommended components can be built together
 on one real vehicle.
 """
+
 
 def with_count(df: pd.DataFrame, count_col: str) -> pd.DataFrame:
     """Normalize the active metric to column name n_count for plotting."""
@@ -314,7 +319,8 @@ def overall_counts(df: pd.DataFrame, count_col: str) -> pd.DataFrame:
         .sort_values(["category", "n_count"], ascending=[True, False])
     )
 
-def build_series_kpis(    ##added 
+
+def build_series_kpis(
     df: pd.DataFrame,
     count_col: str,
     lifecycle_df: Optional[pd.DataFrame] = None,
@@ -515,7 +521,6 @@ def build_series_kpis(    ##added
     )
 
 
-
 def top_series_rows(
     kpis: pd.DataFrame,
     categories: str | list[str],
@@ -607,7 +612,8 @@ def build_recommendation_export(
     return pd.DataFrame.from_records(records)
 
 
-def dataframe_to_excel_bytes(df: pd.DataFrame, sheet_name: str = "Recommendation") -> bytes:
+def dataframe_to_excel_bytes(df: pd.DataFrame,
+                             sheet_name: str = "Recommendation") -> bytes:
     buffer = BytesIO()
     with pd.ExcelWriter(buffer, engine="openpyxl") as writer:
         df.to_excel(writer, index=False, sheet_name=sheet_name)
@@ -615,12 +621,20 @@ def dataframe_to_excel_bytes(df: pd.DataFrame, sheet_name: str = "Recommendation
 
 
 def _load_export_font(size: int, bold: bool = False) -> ImageFont.ImageFont:
-    candidates = [
-        "/System/Library/Fonts/Supplemental/Arial Bold.ttf" if bold else "/System/Library/Fonts/Supplemental/Arial.ttf",
-        "/Library/Fonts/Arial Bold.ttf" if bold else "/Library/Fonts/Arial.ttf",
-        "/System/Library/Fonts/Supplemental/Arial.ttf",
-        "DejaVuSans-Bold.ttf" if bold else "DejaVuSans.ttf",
-    ]
+    """Return a TrueType font for JPEG export, with sensible fallbacks."""
+    if bold:
+        candidates = [
+            "/System/Library/Fonts/Supplemental/Arial Bold.ttf",
+            "/Library/Fonts/Arial Bold.ttf",
+            "DejaVuSans-Bold.ttf",
+        ]
+    else:
+        candidates = [
+            "/System/Library/Fonts/Supplemental/Arial.ttf",
+            "/Library/Fonts/Arial.ttf",
+            "/System/Library/Fonts/Supplemental/Arial.ttf",
+            "DejaVuSans.ttf",
+        ]
     for path in candidates:
         try:
             return ImageFont.truetype(path, size=size)
@@ -737,8 +751,10 @@ def recommendation_to_jpeg_bytes(
     draw.line((x, y, width - padding, y), fill=divider_rgb, width=2)
     y += 18
     draw.text((x, y + 8), "Vehicle registrations", font=footer_label_font, fill=muted)
-    value_x = x + int(draw.textlength("Vehicle registrations", font=footer_label_font)) + 18
-    draw.text((value_x, y), f"{vehicle_registrations:,}", font=footer_value_font, fill=dark)
+    value_x = x + int(draw.textlength("Vehicle registrations",
+                      font=footer_label_font)) + 18
+    draw.text((value_x, y), f"{vehicle_registrations:,}",
+              font=footer_value_font, fill=dark)
 
     buffer = BytesIO()
     img.save(buffer, format="JPEG", quality=92, optimize=True)
@@ -760,10 +776,26 @@ def render_recommendation_hero(
     vehicle_registrations: int,
 ) -> None:
     slots = [
-        ("Engine · K1", series_names(engine_top), f"{engine_share:.1%} of K1 registrations"),
-        ("Seats · K2", series_names(seats_top), f"{seats_share:.1%} of K2 registrations"),
-        ("Gearbox · K3", series_names(gearbox_top), f"{gearbox_share:.1%} of K3 registrations"),
-        ("Body · K4–K7", series_names(body_top), f"{body_share:.1%} of K4–K7 body pool"),
+        (
+            "Engine · K1",
+            series_names(engine_top),
+            f"{engine_share:.1%} of K1 registrations",
+        ),
+        (
+            "Seats · K2",
+            series_names(seats_top),
+            f"{seats_share:.1%} of K2 registrations",
+        ),
+        (
+            "Gearbox · K3",
+            series_names(gearbox_top),
+            f"{gearbox_share:.1%} of K3 registrations",
+        ),
+        (
+            "Body · K4–K7",
+            series_names(body_top),
+            f"{body_share:.1%} of K4–K7 body pool",
+        ),
     ]
 
     slot_html = "".join(
@@ -801,7 +833,8 @@ def render_recommendation_hero(
             border-left: 4px solid {BRAND_BLUE};
             box-sizing: border-box;
             color: {BRAND_TEXT};
-            font-family: "Source Sans Pro", "Source Sans 3", Helvetica, Arial, sans-serif;
+            font-family: "Source Sans Pro", "Source Sans 3",
+                Helvetica, Arial, sans-serif;
             padding: 1rem 1.15rem 1rem;
           }}
           .rec-title {{
@@ -933,7 +966,10 @@ def render_recommendation_hero(
             data=dataframe_to_excel_bytes(export_df),
             file_name=f"{base_name}.xlsx",
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            help="Download the recommended vehicle slots and settings as an Excel file.",
+            help=(
+                "Download the recommended vehicle slots and settings "
+                "as an Excel file."
+            ),
             key=f"export_recommendation_xlsx_{mode_slug}_{period_slug}",
             type="primary",
             icon=":material/table:",
@@ -1004,6 +1040,8 @@ def build_ranking(
         )
         .reset_index(drop=True)
     )
+
+
 def top_five_ranking(ranking: pd.DataFrame) -> pd.DataFrame:
     """
     Return the top five ranks.
@@ -1018,6 +1056,7 @@ def top_five_ranking(ranking: pd.DataFrame) -> pd.DataFrame:
     return ranking[
         ranking["display_rank"] <= 5
     ].copy()
+
 
 def ranking_lead_stats(ranking: pd.DataFrame) -> dict:
     """Calculate the leader's gap to the second row in the ranking."""
@@ -1067,6 +1106,7 @@ def ranking_lead_stats(ranking: pd.DataFrame) -> dict:
         "lead_pp": gap_pp,
     }
 
+
 def winners_by_category(overall: pd.DataFrame) -> pd.DataFrame:
     rows = []
     for cat in CATEGORIES:
@@ -1079,7 +1119,8 @@ def winners_by_category(overall: pd.DataFrame) -> pd.DataFrame:
 
 
 def plot_series_bars(overall: pd.DataFrame, category: str, title: Optional[str] = None):
-    sub = overall[overall["category"] == category].sort_values("n_count", ascending=False)
+    sub = overall[overall["category"] == category].sort_values(
+        "n_count", ascending=False)
     fig = px.bar(
         sub,
         x="series",
@@ -1349,7 +1390,6 @@ def main() -> None:
         render_sidebar_branding(logo_file)
         st.divider()
 
-
     # ---------------------------------------------------------
     # Header
     # ---------------------------------------------------------
@@ -1361,7 +1401,6 @@ def main() -> None:
         "to open the sidebar. Use it for analysis settings, calculation methodology, "
         "and glossary."
     )
-
 
     # ---------------------------------------------------------
     # Registration basis + analysis period (side by side)
@@ -1435,7 +1474,6 @@ def main() -> None:
             key="analysis_year_range",
         )
 
-
     # IMPORTANT:
     # This must be OUTSIDE the if / elif / else block
     analysis_df = df[
@@ -1444,7 +1482,6 @@ def main() -> None:
             analysis_end_year,
         )
     ].copy()
-
 
     # Label for display
     if analysis_start_year == analysis_end_year:
@@ -1462,34 +1499,34 @@ def main() -> None:
     with st.sidebar.expander("Glossary"):
         st.markdown(
             """
-**Series**  
+**Series**
 Component type + manufacturer + plant (e.g. K1BE1-104-1041).
 
-**Registration volume**  
+**Registration volume**
 Number of registered vehicles containing that series.
 
-**Defective vehicle**  
+**Defective vehicle**
 A vehicle is classified as defective if the vehicle itself, an installed
 component, or an installed single part is marked defective. A defective
 single part also makes its component defective. Only defects occurring
 after registration are considered. Pre-registration defects are treated
 as production issues and ignored for this registration-based analysis.
 
-**Defect-filtered registrations**  
+**Defect-filtered registrations**
 Registration counts after excluding defective vehicles
 (see *Defective vehicle*).
 
-**First / last observed registration**  
+**First / last observed registration**
 First or last year a series appears in the data — not necessarily production start/end.
 
-**Lifecycle check**  
+**Lifecycle check**
 For each of the four recommended slots (engine, seats, gearbox, body), we check
 whether at least one leading series from the selected analysis period still has
 registrations in the latest year of the full dataset. If a leader is no longer
 observed there, the recommendation may reflect a historically popular series
 that is no longer present at the end of the data.
 
-**Export recommendation**  
+**Export recommendation**
 Below the Recommended vehicle card you can download the current result:
 - **Excel** — table of recommended slots (series, market share, analysis period,
   registration basis, vehicle registrations). Tied leaders appear as separate rows.
@@ -1498,16 +1535,14 @@ Below the Recommended vehicle card you can download the current result:
         )
 
     overall = overall_counts(
-    analysis_df,
-    count_col,
+        analysis_df,
+        count_col,
     )
 
     overall_full_period = overall_counts(
-    df,
-    count_col,
+        df,
+        count_col,
     )
-
-    winners = winners_by_category(overall)
 
     series_kpis = build_series_kpis(
         df=analysis_df,
@@ -1518,9 +1553,7 @@ Below the Recommended vehicle card you can download the current result:
         lifecycle_df=df,
     )
 
-    # --------------------------------------------------------- added
     # Executive summary
-    # ---------------------------------------------------------
 
     engine_top = top_series_rows(series_kpis, "K1")
     seats_top = top_series_rows(series_kpis, "K2")
@@ -1545,13 +1578,12 @@ Below the Recommended vehicle card you can download the current result:
 
         return float(rows.iloc[0]["market_share"])
 
-
     engine_share = category_share(engine_top)
     seats_share = category_share(seats_top)
     gearbox_share = category_share(gearbox_top)
 
     body_pool = series_kpis[
-    series_kpis["category"].isin(BODY_CATEGORIES)
+        series_kpis["category"].isin(BODY_CATEGORIES)
     ]
 
     body_total = body_pool["n_count"].sum()
@@ -1591,8 +1623,6 @@ Below the Recommended vehicle card you can download the current result:
     gearbox_top5 = top_five_ranking(gearbox_ranking)
     body_top5 = top_five_ranking(body_ranking)
 
-
-
     recommendation_slots = [
         engine_top,
         seats_top,
@@ -1619,14 +1649,14 @@ Below the Recommended vehicle card you can download the current result:
         st.warning(
             f"**Lifecycle check:** only {current_slots} of four recommendation "
             f"slots (K1, K2, K3, body pool K4–K7) based on **{analysis_period_label}** "
-            f"have a leading series still observed in {latest_year}. Historical "
-            "popularity may include series no longer observed at the end of the dataset. "
-            "Details: see Glossary."
-        )
+            f"have a leading series still observed in {latest_year}. "
+            "Historical popularity may include series no longer observed "
+            "at the end of the dataset. "
+            "Details: see Glossary.")
 
     tab_rec, tab_trend, tab_explore, tab_table = st.tabs(
-            ["Recommendation", "Yearly trends", "Explore", "Full data"]
-        )
+        ["Recommendation", "Yearly trends", "Explore", "Full data"]
+    )
 
     with tab_rec:
         st.subheader("Top component recommendations")
@@ -1638,12 +1668,12 @@ Below the Recommended vehicle card you can download the current result:
         )
 
         rank_engine, rank_seats, rank_gearbox, rank_body = st.tabs(
-        [
-        "Engine · K1",
-        "Seats · K2",
-        "Gearbox · K3",
-        "Body · K4–K7",
-        ]
+            [
+                "Engine · K1",
+                "Seats · K2",
+                "Gearbox · K3",
+                "Body · K4–K7",
+            ]
         )
 
         with rank_engine:
@@ -1977,10 +2007,10 @@ Below the Recommended vehicle card you can download the current result:
         )
         if trend_metric == "Category market share":
             st.caption(
-                "Market share is calculated within the selected category for each year. "
+                "Market share is calculated within the selected category "
+                "for each year. "
                 "This makes relative shifts visible even when the overall registration "
-                "volume changes."
-        )
+                "volume changes.")
         if cat in BODY_CATEGORIES:
             st.plotly_chart(
                 plot_body_bars(overall_full_period),
@@ -2022,13 +2052,19 @@ Below the Recommended vehicle card you can download the current result:
         ]
         agg = (
             filtered.groupby(
-                ["category", "series", "component_type", "manufacturer", "plant", "label"],
+                [
+                    "category",
+                    "series",
+                    "component_type",
+                    "manufacturer",
+                    "plant",
+                    "label"],
                 as_index=False,
-            )[count_col]
-            .sum()
-            .rename(columns={count_col: "n_count"})
-            .sort_values("n_count", ascending=False)
-        )
+            )[count_col] .sum() .rename(
+                columns={
+                    count_col: "n_count"}) .sort_values(
+                        "n_count",
+                ascending=False))
         registrations_label = (
             "Registrations (defect-filtered)"
             if exclude_defective

@@ -283,8 +283,8 @@ def _tidy_fault(df: pd.DataFrame) -> pd.DataFrame:
         fy = df["Fehlerhaft.y"] if "Fehlerhaft.y" in df.columns else None
         if fx is not None and fy is not None:
             fh = (
-                pd.to_numeric(fx, errors="coerce").fillna(0).ne(0)
-                | pd.to_numeric(fy, errors="coerce").fillna(0).ne(0)
+                pd.to_numeric(fx, errors="coerce").fillna(0).ne(0) |
+                pd.to_numeric(fy, errors="coerce").fillna(0).ne(0)
             ).astype(int)
         elif fx is not None:
             fh = fx
@@ -326,7 +326,11 @@ def load_defective_units(path: Path) -> pd.DataFrame:
 
     if size_mb >= 80 and field_sep in {",", ";"} and ("\n" in head or "\r" in head):
         chunks = []
-        for chunk in pd.read_csv(path, sep=field_sep, chunksize=250_000, low_memory=False):
+        for chunk in pd.read_csv(
+                path,
+                sep=field_sep,
+                chunksize=250_000,
+                low_memory=False):
             tidy = _tidy_fault(chunk)
             bad = tidy.loc[
                 tidy["fehlerhaft"] == 1, ["id", "defect_date"]
@@ -369,18 +373,21 @@ def load_defective_units(path: Path) -> pd.DataFrame:
 
     raw = _read_raw(path)
     tidy = _tidy_fault(raw)
-    bad = tidy.loc[tidy["fehlerhaft"] == 1, ["id", "defect_date"]].dropna(subset=["defect_date"])
+    bad = tidy.loc[tidy["fehlerhaft"] == 1, ["id", "defect_date"]].dropna(subset=[
+                                                                          "defect_date"])
     print(f"    defective: {len(bad):,}", flush=True)
     del raw, tidy
     return bad
 
 
 def load_registrations() -> pd.DataFrame:
+    """Load vehicle registration dates keyed by vehicle ID."""
     path = DATA_DIR / "Zulassungen" / "Zulassungen_alle_Fahrzeuge.csv"
     with open(path, "rb") as f:
         head = f.read(200).decode("utf-8", errors="replace")
     sep = ";" if head.count(";") > head.count(",") else ","
-    zul = pd.read_csv(path, sep=sep, usecols=["IDNummer", "Zulassung"], dtype={"IDNummer": str})
+    zul = pd.read_csv(path, sep=sep, usecols=[
+                      "IDNummer", "Zulassung"], dtype={"IDNummer": str})
     zul["reg_date"] = pd.to_datetime(zul["Zulassung"], errors="coerce")
     zul = zul.dropna(subset=["reg_date"])
     return zul.rename(columns={"IDNummer": "ID_Fahrzeug"})[["ID_Fahrzeug", "reg_date"]]
@@ -398,7 +405,8 @@ def load_bom_slot_maps() -> dict[str, pd.DataFrame]:
         df = pd.read_csv(
             DATA_DIR / rel,
             sep=";",
-            usecols=["ID_Fahrzeug", "ID_Motor", "ID_Sitze", "ID_Schaltung", "ID_Karosserie"],
+            usecols=["ID_Fahrzeug", "ID_Motor", "ID_Sitze",
+                     "ID_Schaltung", "ID_Karosserie"],
             dtype=str,
         )
         for col in slots:
@@ -446,6 +454,7 @@ def _read_bestandteile(path: Path) -> pd.DataFrame:
 
 
 def build_defective_vehicle_ids(save: bool = True) -> set[str]:
+    """Identify vehicles defective after registration and optionally cache the IDs."""
     print("1) registrations", flush=True)
     reg = load_registrations()
     print(f"   {len(reg):,}", flush=True)
@@ -537,15 +546,19 @@ def build_defective_vehicle_ids(save: bool = True) -> set[str]:
             )
             print(f"     {pc}: +{added:,} -> {len(defective):,}", flush=True)
 
-    print(f"DONE: {len(defective):,} defective vehicles (after registration)", flush=True)
+    print(
+        f"DONE: {len(defective):,} defective vehicles (after registration)",
+        flush=True)
     if save:
         LOCAL_DIR.mkdir(parents=True, exist_ok=True)
-        pd.Series(sorted(defective), name="ID_Fahrzeug").to_csv(DEFECT_IDS_PATH, index=False)
+        pd.Series(sorted(defective), name="ID_Fahrzeug").to_csv(
+            DEFECT_IDS_PATH, index=False)
         print(f"wrote {DEFECT_IDS_PATH}", flush=True)
     return defective
 
 
 def load_defective_vehicle_ids() -> set[str]:
+    """Load cached defective vehicle IDs or build them if missing."""
     if DEFECT_IDS_PATH.exists():
         return set(pd.read_csv(DEFECT_IDS_PATH, dtype=str)["ID_Fahrzeug"].astype(str))
     return build_defective_vehicle_ids(save=True)

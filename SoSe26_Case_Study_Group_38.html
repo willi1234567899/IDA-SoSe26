@@ -7568,7 +7568,7 @@ counts that exclude these defective vehicles.</p>
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [1]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="c1"># setup: suppress warnings, load libraries, define paths and labels</span>
@@ -7587,29 +7587,41 @@ counts that exclude these defective vehicles.</p>
 <span class="n">FINAL_CSV</span> <span class="o">=</span> <span class="n">DATA_DIR</span> <span class="o">/</span> <span class="s2">"SoSe26_Case_Study_finalData_Group_38.csv"</span>
 
 <span class="c1"># four vehicle parts lists: (relative path, brand, model)</span>
-<span class="n">BOM_FILES</span> <span class="o">=</span> <span class="p">[(</span><span class="s2">"Fahrzeug/Bestandteile_Fahrzeuge_OEM1_Typ11.csv"</span><span class="p">,</span> <span class="s2">"OEM1"</span><span class="p">,</span> <span class="s2">"Typ11"</span><span class="p">),</span> <span class="p">(</span><span class="s2">"Fahrzeug/Bestandteile_Fahrzeuge_OEM1_Typ12.csv"</span><span class="p">,</span> <span class="s2">"OEM1"</span><span class="p">,</span> <span class="s2">"Typ12"</span><span class="p">),</span>
-    <span class="p">(</span><span class="s2">"Fahrzeug/Bestandteile_Fahrzeuge_OEM2_Typ21.csv"</span><span class="p">,</span> <span class="s2">"OEM2"</span><span class="p">,</span> <span class="s2">"Typ21"</span><span class="p">),</span> <span class="p">(</span><span class="s2">"Fahrzeug/Bestandteile_Fahrzeuge_OEM2_Typ22.csv"</span><span class="p">,</span> <span class="s2">"OEM2"</span><span class="p">,</span> <span class="s2">"Typ22"</span><span class="p">)]</span>
+<span class="n">BOM_FILES</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="p">(</span><span class="s2">"Fahrzeug/Bestandteile_Fahrzeuge_OEM1_Typ11.csv"</span><span class="p">,</span>
+     <span class="s2">"OEM1"</span><span class="p">,</span>
+     <span class="s2">"Typ11"</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">"Fahrzeug/Bestandteile_Fahrzeuge_OEM1_Typ12.csv"</span><span class="p">,</span>
+     <span class="s2">"OEM1"</span><span class="p">,</span>
+     <span class="s2">"Typ12"</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">"Fahrzeug/Bestandteile_Fahrzeuge_OEM2_Typ21.csv"</span><span class="p">,</span>
+     <span class="s2">"OEM2"</span><span class="p">,</span>
+     <span class="s2">"Typ21"</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">"Fahrzeug/Bestandteile_Fahrzeuge_OEM2_Typ22.csv"</span><span class="p">,</span>
+     <span class="s2">"OEM2"</span><span class="p">,</span>
+     <span class="s2">"Typ22"</span><span class="p">)]</span>
 
 <span class="c1"># parts-list columns mapped to K categories (body category comes from the ID prefix)</span>
-<span class="n">SLOTS</span> <span class="o">=</span> <span class="p">[(</span><span class="s2">"ID_Motor"</span><span class="p">,</span> <span class="s2">"K1"</span><span class="p">),</span> <span class="p">(</span><span class="s2">"ID_Sitze"</span><span class="p">,</span> <span class="s2">"K2"</span><span class="p">),</span> <span class="p">(</span><span class="s2">"ID_Schaltung"</span><span class="p">,</span> <span class="s2">"K3"</span><span class="p">),</span> <span class="p">(</span><span class="s2">"ID_Karosserie"</span><span class="p">,</span> <span class="s2">"body"</span><span class="p">)]</span>
+<span class="n">SLOTS</span> <span class="o">=</span> <span class="p">[(</span><span class="s2">"ID_Motor"</span><span class="p">,</span> <span class="s2">"K1"</span><span class="p">),</span> <span class="p">(</span><span class="s2">"ID_Sitze"</span><span class="p">,</span> <span class="s2">"K2"</span><span class="p">),</span>
+         <span class="p">(</span><span class="s2">"ID_Schaltung"</span><span class="p">,</span> <span class="s2">"K3"</span><span class="p">),</span> <span class="p">(</span><span class="s2">"ID_Karosserie"</span><span class="p">,</span> <span class="s2">"body"</span><span class="p">)]</span>
 
 <span class="c1"># plain-language labels for the charts (by component type)</span>
 <span class="n">TYPE_LABEL</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"K1BE1"</span><span class="p">:</span> <span class="s2">"Petrol engine (OEM1)"</span><span class="p">,</span>
-    <span class="s2">"K1BE2"</span><span class="p">:</span> <span class="s2">"Petrol engine (OEM2)"</span><span class="p">,</span>
-    <span class="s2">"K1DI1"</span><span class="p">:</span> <span class="s2">"Diesel engine (OEM1)"</span><span class="p">,</span>
-    <span class="s2">"K1DI2"</span><span class="p">:</span> <span class="s2">"Diesel engine (OEM2)"</span><span class="p">,</span>
-    <span class="s2">"K2ST1"</span><span class="p">:</span> <span class="s2">"Fabric seats (OEM1)"</span><span class="p">,</span>
-    <span class="s2">"K2ST2"</span><span class="p">:</span> <span class="s2">"Fabric seats (OEM2)"</span><span class="p">,</span>
-    <span class="s2">"K2LE1"</span><span class="p">:</span> <span class="s2">"Leather seats (OEM1)"</span><span class="p">,</span>
-    <span class="s2">"K2LE2"</span><span class="p">:</span> <span class="s2">"Leather seats (OEM2)"</span><span class="p">,</span>
-    <span class="s2">"K3SG1"</span><span class="p">:</span> <span class="s2">"Manual gearbox (OEM1)"</span><span class="p">,</span>
-    <span class="s2">"K3SG2"</span><span class="p">:</span> <span class="s2">"Manual gearbox (OEM2)"</span><span class="p">,</span>
-    <span class="s2">"K3AG1"</span><span class="p">:</span> <span class="s2">"Automatic gearbox (OEM1)"</span><span class="p">,</span>
-    <span class="s2">"K3AG2"</span><span class="p">:</span> <span class="s2">"Automatic gearbox (OEM2)"</span><span class="p">,</span>
-    <span class="s2">"K4"</span><span class="p">:</span> <span class="s2">"Body (OEM1 Typ11)"</span><span class="p">,</span>
-    <span class="s2">"K5"</span><span class="p">:</span> <span class="s2">"Body (OEM1 Typ12)"</span><span class="p">,</span>
-    <span class="s2">"K6"</span><span class="p">:</span> <span class="s2">"Body (OEM2 Typ21)"</span><span class="p">,</span>
-    <span class="s2">"K7"</span><span class="p">:</span> <span class="s2">"Body (OEM2 Typ22)"</span><span class="p">}</span>
+              <span class="s2">"K1BE2"</span><span class="p">:</span> <span class="s2">"Petrol engine (OEM2)"</span><span class="p">,</span>
+              <span class="s2">"K1DI1"</span><span class="p">:</span> <span class="s2">"Diesel engine (OEM1)"</span><span class="p">,</span>
+              <span class="s2">"K1DI2"</span><span class="p">:</span> <span class="s2">"Diesel engine (OEM2)"</span><span class="p">,</span>
+              <span class="s2">"K2ST1"</span><span class="p">:</span> <span class="s2">"Fabric seats (OEM1)"</span><span class="p">,</span>
+              <span class="s2">"K2ST2"</span><span class="p">:</span> <span class="s2">"Fabric seats (OEM2)"</span><span class="p">,</span>
+              <span class="s2">"K2LE1"</span><span class="p">:</span> <span class="s2">"Leather seats (OEM1)"</span><span class="p">,</span>
+              <span class="s2">"K2LE2"</span><span class="p">:</span> <span class="s2">"Leather seats (OEM2)"</span><span class="p">,</span>
+              <span class="s2">"K3SG1"</span><span class="p">:</span> <span class="s2">"Manual gearbox (OEM1)"</span><span class="p">,</span>
+              <span class="s2">"K3SG2"</span><span class="p">:</span> <span class="s2">"Manual gearbox (OEM2)"</span><span class="p">,</span>
+              <span class="s2">"K3AG1"</span><span class="p">:</span> <span class="s2">"Automatic gearbox (OEM1)"</span><span class="p">,</span>
+              <span class="s2">"K3AG2"</span><span class="p">:</span> <span class="s2">"Automatic gearbox (OEM2)"</span><span class="p">,</span>
+              <span class="s2">"K4"</span><span class="p">:</span> <span class="s2">"Body (OEM1 Typ11)"</span><span class="p">,</span>
+              <span class="s2">"K5"</span><span class="p">:</span> <span class="s2">"Body (OEM1 Typ12)"</span><span class="p">,</span>
+              <span class="s2">"K6"</span><span class="p">:</span> <span class="s2">"Body (OEM2 Typ21)"</span><span class="p">,</span>
+              <span class="s2">"K7"</span><span class="p">:</span> <span class="s2">"Body (OEM2 Typ22)"</span><span class="p">}</span>
 
 <span class="n">PLOTLY_BLUES</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"#2F5F7A"</span><span class="p">,</span> <span class="s2">"#5BA4CF"</span><span class="p">,</span> <span class="s2">"#8FCBE8"</span><span class="p">,</span> <span class="s2">"#C5E4F3"</span><span class="p">]</span>
 <span class="n">CATEGORIES</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"K1"</span><span class="p">,</span> <span class="s2">"K2"</span><span class="p">,</span> <span class="s2">"K3"</span><span class="p">,</span> <span class="s2">"K4"</span><span class="p">,</span> <span class="s2">"K5"</span><span class="p">,</span> <span class="s2">"K6"</span><span class="p">,</span> <span class="s2">"K7"</span><span class="p">]</span>
@@ -7628,7 +7640,8 @@ counts that exclude these defective vehicles.</p>
         <span class="s2">"manufacturer"</span><span class="p">:</span> <span class="n">parts</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
         <span class="s2">"plant"</span><span class="p">:</span> <span class="n">parts</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span>
     <span class="p">})</span>
-    <span class="n">out</span><span class="p">[</span><span class="s2">"series"</span><span class="p">]</span> <span class="o">=</span> <span class="n">out</span><span class="p">[</span><span class="s2">"component_type"</span><span class="p">]</span> <span class="o">+</span> <span class="s2">"-"</span> <span class="o">+</span> <span class="n">out</span><span class="p">[</span><span class="s2">"manufacturer"</span><span class="p">]</span> <span class="o">+</span> <span class="s2">"-"</span> <span class="o">+</span> <span class="n">out</span><span class="p">[</span><span class="s2">"plant"</span><span class="p">]</span>
+    <span class="n">out</span><span class="p">[</span><span class="s2">"series"</span><span class="p">]</span> <span class="o">=</span> <span class="n">out</span><span class="p">[</span><span class="s2">"component_type"</span><span class="p">]</span> <span class="o">+</span> <span class="s2">"-"</span> <span class="o">+</span> \
+        <span class="n">out</span><span class="p">[</span><span class="s2">"manufacturer"</span><span class="p">]</span> <span class="o">+</span> <span class="s2">"-"</span> <span class="o">+</span> <span class="n">out</span><span class="p">[</span><span class="s2">"plant"</span><span class="p">]</span>
     <span class="k">return</span> <span class="n">out</span>
 </pre></div>
 </div>
@@ -7640,7 +7653,7 @@ counts that exclude these defective vehicles.</p>
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [2]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="c1"># check that required input files exist under Data/</span>
@@ -7690,23 +7703,37 @@ gearbox and body. Each ID already encodes manufacturer and plant.</p>
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [3]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="c1"># load only the ID columns needed for the analysis</span>
 <span class="n">bom_frames</span> <span class="o">=</span> <span class="p">[]</span>
 <span class="k">for</span> <span class="n">rel</span><span class="p">,</span> <span class="n">oem</span><span class="p">,</span> <span class="n">vtype</span> <span class="ow">in</span> <span class="n">BOM_FILES</span><span class="p">:</span>
     <span class="n">path</span> <span class="o">=</span> <span class="n">DATA_DIR</span> <span class="o">/</span> <span class="n">rel</span>
-    <span class="n">df</span> <span class="o">=</span> <span class="n">read_semicolon_csv</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">usecols</span><span class="o">=</span><span class="p">[</span><span class="s2">"ID_Fahrzeug"</span><span class="p">,</span> <span class="s2">"ID_Karosserie"</span><span class="p">,</span> <span class="s2">"ID_Schaltung"</span><span class="p">,</span> <span class="s2">"ID_Sitze"</span><span class="p">,</span> <span class="s2">"ID_Motor"</span><span class="p">],</span><span class="n">dtype</span><span class="o">=</span><span class="nb">str</span><span class="p">)</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">read_semicolon_csv</span><span class="p">(</span>
+        <span class="n">path</span><span class="p">,</span>
+        <span class="n">usecols</span><span class="o">=</span><span class="p">[</span>
+            <span class="s2">"ID_Fahrzeug"</span><span class="p">,</span>
+            <span class="s2">"ID_Karosserie"</span><span class="p">,</span>
+            <span class="s2">"ID_Schaltung"</span><span class="p">,</span>
+            <span class="s2">"ID_Sitze"</span><span class="p">,</span>
+            <span class="s2">"ID_Motor"</span><span class="p">],</span>
+        <span class="n">dtype</span><span class="o">=</span><span class="nb">str</span><span class="p">)</span>
     <span class="n">df</span><span class="p">[</span><span class="s2">"oem"</span><span class="p">]</span> <span class="o">=</span> <span class="n">oem</span>
     <span class="n">df</span><span class="p">[</span><span class="s2">"vehicle_type"</span><span class="p">]</span> <span class="o">=</span> <span class="n">vtype</span>
     <span class="c1"># quality check: row count, duplicate keys, missing cells</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">oem</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">vtype</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">)</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2"> rows, duplicate vehicle IDs=</span><span class="si">{</span><span class="n">df</span><span class="p">[</span><span class="s1">'ID_Fahrzeug'</span><span class="p">]</span><span class="o">.</span><span class="n">duplicated</span><span class="p">()</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="si">}</span><span class="s2">, missing cells=</span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">isna</span><span class="p">()</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">oem</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">vtype</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">)</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2"> rows, "</span>
+        <span class="sa">f</span><span class="s2">"duplicate vehicle IDs=</span><span class="si">{</span><span class="n">df</span><span class="p">[</span><span class="s1">'ID_Fahrzeug'</span><span class="p">]</span><span class="o">.</span><span class="n">duplicated</span><span class="p">()</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="si">}</span><span class="s2">, "</span>
+        <span class="sa">f</span><span class="s2">"missing cells=</span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">isna</span><span class="p">()</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
     <span class="n">bom_frames</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
 
 <span class="c1"># combine all OEMs / vehicle types into one table</span>
 <span class="n">bom</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">bom_frames</span><span class="p">,</span> <span class="n">ignore_index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Total vehicles in parts lists: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">bom</span><span class="p">)</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2">  unique IDs: </span><span class="si">{</span><span class="n">bom</span><span class="p">[</span><span class="s1">'ID_Fahrzeug'</span><span class="p">]</span><span class="o">.</span><span class="n">nunique</span><span class="p">()</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span>
+    <span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Total vehicles in parts lists: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">bom</span><span class="p">)</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2">  "</span>
+    <span class="sa">f</span><span class="s2">"unique IDs: </span><span class="si">{</span><span class="n">bom</span><span class="p">[</span><span class="s1">'ID_Fahrzeug'</span><span class="p">]</span><span class="o">.</span><span class="n">nunique</span><span class="p">()</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2">"</span>
+<span class="p">)</span>
 <span class="n">bom</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
 </pre></div>
 </div>
@@ -7730,7 +7757,7 @@ Total vehicles in parts lists: 3,204,104  unique IDs: 3,204,104
 </div>
 </div>
 <div class="jp-OutputArea-child jp-OutputArea-executeResult">
-<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[ ]:</div>
+<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[3]:</div>
 <div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/html" tabindex="0">
 <div>
 <style scoped="">
@@ -7834,7 +7861,7 @@ Example: <code>K1BE1-101-1011-7</code> -&gt; series <code>K1BE1-101-1011</code> 
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [4]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="c1"># show how a full ID maps to type, manufacturer, plant and series</span>
@@ -7852,7 +7879,7 @@ Example: <code>K1BE1-101-1011-7</code> -&gt; series <code>K1BE1-101-1011</code> 
 </div>
 <div class="jp-OutputArea jp-Cell-outputArea">
 <div class="jp-OutputArea-child jp-OutputArea-executeResult">
-<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[ ]:</div>
+<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[4]:</div>
 <div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/html" tabindex="0">
 <div>
 <style scoped="">
@@ -7950,13 +7977,20 @@ date (year). Municipality is not required for the series ranking.</p>
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [5]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="c1"># load KBA registrations: vehicle ID, municipality, registration date</span>
-<span class="n">zul</span> <span class="o">=</span> <span class="n">read_semicolon_csv</span><span class="p">(</span><span class="n">zul_path</span><span class="p">,</span> <span class="n">usecols</span><span class="o">=</span><span class="p">[</span><span class="s2">"IDNummer"</span><span class="p">,</span> <span class="s2">"Gemeinden"</span><span class="p">,</span> <span class="s2">"Zulassung"</span><span class="p">])</span>
+<span class="n">zul</span> <span class="o">=</span> <span class="n">read_semicolon_csv</span><span class="p">(</span>
+    <span class="n">zul_path</span><span class="p">,</span>
+    <span class="n">usecols</span><span class="o">=</span><span class="p">[</span><span class="s2">"IDNummer"</span><span class="p">,</span> <span class="s2">"Gemeinden"</span><span class="p">,</span> <span class="s2">"Zulassung"</span><span class="p">],</span>
+<span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">zul</span><span class="o">.</span><span class="n">dtypes</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"rows=</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">zul</span><span class="p">)</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2">  duplicate IDs=</span><span class="si">{</span><span class="n">zul</span><span class="p">[</span><span class="s1">'IDNummer'</span><span class="p">]</span><span class="o">.</span><span class="n">duplicated</span><span class="p">()</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="si">}</span><span class="s2">  missing=</span><span class="si">{</span><span class="n">zul</span><span class="o">.</span><span class="n">isna</span><span class="p">()</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span>
+    <span class="sa">f</span><span class="s2">"rows=</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">zul</span><span class="p">)</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2">  duplicate IDs="</span>
+    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">zul</span><span class="p">[</span><span class="s1">'IDNummer'</span><span class="p">]</span><span class="o">.</span><span class="n">duplicated</span><span class="p">()</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="si">}</span><span class="s2">  "</span>
+    <span class="sa">f</span><span class="s2">"missing=</span><span class="si">{</span><span class="n">zul</span><span class="o">.</span><span class="n">isna</span><span class="p">()</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span><span class="si">}</span><span class="s2">"</span>
+<span class="p">)</span>
 
 <span class="c1"># extract registration year for the trend analysis</span>
 <span class="n">zul</span><span class="p">[</span><span class="s2">"Zulassung"</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span><span class="n">zul</span><span class="p">[</span><span class="s2">"Zulassung"</span><span class="p">],</span> <span class="n">errors</span><span class="o">=</span><span class="s2">"coerce"</span><span class="p">)</span>
@@ -7967,10 +8001,17 @@ date (year). Municipality is not required for the series ranking.</p>
 <span class="c1"># plot registrations per year</span>
 <span class="n">year_counts</span> <span class="o">=</span> <span class="n">zul</span><span class="p">[</span><span class="s2">"year"</span><span class="p">]</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span><span class="o">.</span><span class="n">sort_index</span><span class="p">()</span>
 <span class="n">fig</span> <span class="o">=</span> <span class="n">px</span><span class="o">.</span><span class="n">bar</span><span class="p">(</span>
-    <span class="n">x</span><span class="o">=</span><span class="n">year_counts</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">),</span> <span class="n">y</span><span class="o">=</span><span class="n">year_counts</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
-    <span class="n">title</span><span class="o">=</span><span class="s2">"Registered vehicles per year"</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="p">{</span><span class="s2">"x"</span><span class="p">:</span> <span class="s2">"Registration year"</span><span class="p">,</span> <span class="s2">"y"</span><span class="p">:</span> <span class="s2">"Vehicles"</span><span class="p">},</span>
+    <span class="n">x</span><span class="o">=</span><span class="n">year_counts</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">),</span>
+    <span class="n">y</span><span class="o">=</span><span class="n">year_counts</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
+    <span class="n">title</span><span class="o">=</span><span class="s2">"Registered vehicles per year"</span><span class="p">,</span>
+    <span class="n">labels</span><span class="o">=</span><span class="p">{</span>
+        <span class="s2">"x"</span><span class="p">:</span> <span class="s2">"Registration year"</span><span class="p">,</span>
+        <span class="s2">"y"</span><span class="p">:</span> <span class="s2">"Vehicles"</span><span class="p">},</span>
     <span class="n">color_discrete_sequence</span><span class="o">=</span><span class="p">[</span><span class="s2">"#5BA4CF"</span><span class="p">])</span>
-<span class="n">fig</span><span class="o">.</span><span class="n">update_layout</span><span class="p">(</span><span class="n">font_family</span><span class="o">=</span><span class="s2">"Source Sans Pro"</span><span class="p">,</span> <span class="n">plot_bgcolor</span><span class="o">=</span><span class="s2">"white"</span><span class="p">,</span> <span class="n">paper_bgcolor</span><span class="o">=</span><span class="s2">"white"</span><span class="p">)</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">update_layout</span><span class="p">(</span>
+    <span class="n">font_family</span><span class="o">=</span><span class="s2">"Source Sans Pro"</span><span class="p">,</span>
+    <span class="n">plot_bgcolor</span><span class="o">=</span><span class="s2">"white"</span><span class="p">,</span>
+    <span class="n">paper_bgcolor</span><span class="o">=</span><span class="s2">"white"</span><span class="p">)</span>
 <span class="n">fig</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 <span class="n">zul</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
 </pre></div>
@@ -7999,7 +8040,7 @@ dates with parse problems: 0
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 </div>
 <div class="jp-OutputArea-child jp-OutputArea-executeResult">
-<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[ ]:</div>
+<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[5]:</div>
 <div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/html" tabindex="0">
 <div>
 <style scoped="">
@@ -8086,7 +8127,7 @@ Then parse type, manufacturer and plant from each ID and reshape to tidy
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [6]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="c1"># check dtypes, then join parts lists to registrations on vehicle ID</span>
@@ -8094,8 +8135,8 @@ Then parse type, manufacturer and plant from each ID and reshape to tidy
 <span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Registration dtypes after parse:</span><span class="se">\n</span><span class="s2">"</span><span class="p">,</span> <span class="n">zul</span><span class="o">.</span><span class="n">dtypes</span><span class="p">)</span>
 
 <span class="c1"># indicator=True reports whether each vehicle found a registration</span>
-<span class="n">merged_check</span> <span class="o">=</span> <span class="n">bom</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">zul</span><span class="p">[[</span><span class="s2">"IDNummer"</span><span class="p">,</span> <span class="s2">"year"</span><span class="p">]],</span>
-    <span class="n">left_on</span><span class="o">=</span><span class="s2">"ID_Fahrzeug"</span><span class="p">,</span> <span class="n">right_on</span><span class="o">=</span><span class="s2">"IDNummer"</span><span class="p">,</span> <span class="n">how</span><span class="o">=</span><span class="s2">"left"</span><span class="p">,</span> <span class="n">indicator</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">merged_check</span> <span class="o">=</span> <span class="n">bom</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">zul</span><span class="p">[[</span><span class="s2">"IDNummer"</span><span class="p">,</span> <span class="s2">"year"</span><span class="p">]],</span> <span class="n">left_on</span><span class="o">=</span><span class="s2">"ID_Fahrzeug"</span><span class="p">,</span>
+                         <span class="n">right_on</span><span class="o">=</span><span class="s2">"IDNummer"</span><span class="p">,</span> <span class="n">how</span><span class="o">=</span><span class="s2">"left"</span><span class="p">,</span> <span class="n">indicator</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Merge result (left = parts list, right = registrations):"</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">merged_check</span><span class="p">[</span><span class="s2">"_merge"</span><span class="p">]</span><span class="o">.</span><span class="n">value_counts</span><span class="p">())</span>
 <span class="n">match_rate</span> <span class="o">=</span> <span class="p">(</span><span class="n">merged_check</span><span class="p">[</span><span class="s2">"_merge"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"both"</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
@@ -8147,7 +8188,7 @@ Match rate: 100.0%
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [7]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="c1"># tidy long form + aggregate per file (keeps RAM lower on large tables)</span>
@@ -8158,8 +8199,13 @@ Match rate: 100.0%
 
 <span class="k">for</span> <span class="n">rel</span><span class="p">,</span> <span class="n">oem</span><span class="p">,</span> <span class="n">vtype</span> <span class="ow">in</span> <span class="n">BOM_FILES</span><span class="p">:</span>
     <span class="n">bom_one</span> <span class="o">=</span> <span class="n">read_semicolon_csv</span><span class="p">(</span><span class="n">DATA_DIR</span> <span class="o">/</span> <span class="n">rel</span><span class="p">,</span>
-        <span class="n">usecols</span><span class="o">=</span><span class="p">[</span><span class="s2">"ID_Fahrzeug"</span><span class="p">,</span> <span class="s2">"ID_Karosserie"</span><span class="p">,</span> <span class="s2">"ID_Schaltung"</span><span class="p">,</span> <span class="s2">"ID_Sitze"</span><span class="p">,</span> <span class="s2">"ID_Motor"</span><span class="p">],</span>
-        <span class="n">dtype</span><span class="o">=</span><span class="nb">str</span><span class="p">)</span>
+                                 <span class="n">usecols</span><span class="o">=</span><span class="p">[</span>
+                                     <span class="s2">"ID_Fahrzeug"</span><span class="p">,</span>
+                                     <span class="s2">"ID_Karosserie"</span><span class="p">,</span>
+                                     <span class="s2">"ID_Schaltung"</span><span class="p">,</span>
+                                     <span class="s2">"ID_Sitze"</span><span class="p">,</span>
+                                     <span class="s2">"ID_Motor"</span><span class="p">],</span>
+                                 <span class="n">dtype</span><span class="o">=</span><span class="nb">str</span><span class="p">)</span>
     <span class="n">m</span> <span class="o">=</span> <span class="n">bom_one</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">zul_slim</span><span class="p">,</span> <span class="n">left_on</span><span class="o">=</span><span class="s2">"ID_Fahrzeug"</span><span class="p">,</span> <span class="n">right_on</span><span class="o">=</span><span class="s2">"IDNummer"</span><span class="p">,</span> <span class="n">how</span><span class="o">=</span><span class="s2">"inner"</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">col</span><span class="p">,</span> <span class="n">default_cat</span> <span class="ow">in</span> <span class="n">SLOTS</span><span class="p">:</span>
         <span class="n">parsed</span> <span class="o">=</span> <span class="n">parse_component_id</span><span class="p">(</span><span class="n">m</span><span class="p">[</span><span class="n">col</span><span class="p">])</span>
@@ -8172,10 +8218,14 @@ Match rate: 100.0%
             <span class="s2">"plant"</span><span class="p">:</span> <span class="n">parsed</span><span class="p">[</span><span class="s2">"plant"</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
             <span class="s2">"series"</span><span class="p">:</span> <span class="n">parsed</span><span class="p">[</span><span class="s2">"series"</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
         <span class="p">})</span>
-        <span class="n">out</span><span class="p">[</span><span class="s2">"category"</span><span class="p">]</span> <span class="o">=</span> <span class="n">out</span><span class="p">[</span><span class="s2">"component_type"</span><span class="p">]</span> <span class="k">if</span> <span class="n">default_cat</span> <span class="o">==</span> <span class="s2">"body"</span> <span class="k">else</span> <span class="n">default_cat</span>
+        <span class="k">if</span> <span class="n">default_cat</span> <span class="o">==</span> <span class="s2">"body"</span><span class="p">:</span>
+            <span class="n">out</span><span class="p">[</span><span class="s2">"category"</span><span class="p">]</span> <span class="o">=</span> <span class="n">out</span><span class="p">[</span><span class="s2">"component_type"</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">out</span><span class="p">[</span><span class="s2">"category"</span><span class="p">]</span> <span class="o">=</span> <span class="n">default_cat</span>
         <span class="n">g</span> <span class="o">=</span> <span class="p">(</span>
             <span class="n">out</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span>
-                <span class="p">[</span><span class="s2">"year"</span><span class="p">,</span> <span class="s2">"oem"</span><span class="p">,</span> <span class="s2">"vehicle_type"</span><span class="p">,</span> <span class="s2">"category"</span><span class="p">,</span> <span class="s2">"component_type"</span><span class="p">,</span> <span class="s2">"manufacturer"</span><span class="p">,</span> <span class="s2">"plant"</span><span class="p">,</span> <span class="s2">"series"</span><span class="p">],</span>
+                <span class="p">[</span><span class="s2">"year"</span><span class="p">,</span> <span class="s2">"oem"</span><span class="p">,</span> <span class="s2">"vehicle_type"</span><span class="p">,</span> <span class="s2">"category"</span><span class="p">,</span>
+                    <span class="s2">"component_type"</span><span class="p">,</span> <span class="s2">"manufacturer"</span><span class="p">,</span> <span class="s2">"plant"</span><span class="p">,</span> <span class="s2">"series"</span><span class="p">],</span>
                 <span class="n">as_index</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
             <span class="p">)</span>
             <span class="o">.</span><span class="n">size</span><span class="p">()</span>
@@ -8186,7 +8236,14 @@ Match rate: 100.0%
 
 <span class="n">final</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">agg_parts</span><span class="p">,</span> <span class="n">ignore_index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="n">final</span> <span class="o">=</span> <span class="n">final</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span>
-    <span class="p">[</span><span class="s2">"year"</span><span class="p">,</span> <span class="s2">"oem"</span><span class="p">,</span> <span class="s2">"vehicle_type"</span><span class="p">,</span> <span class="s2">"category"</span><span class="p">,</span> <span class="s2">"component_type"</span><span class="p">,</span> <span class="s2">"manufacturer"</span><span class="p">,</span> <span class="s2">"plant"</span><span class="p">,</span> <span class="s2">"series"</span><span class="p">],</span>
+    <span class="p">[</span><span class="s2">"year"</span><span class="p">,</span>
+     <span class="s2">"oem"</span><span class="p">,</span>
+     <span class="s2">"vehicle_type"</span><span class="p">,</span>
+     <span class="s2">"category"</span><span class="p">,</span>
+     <span class="s2">"component_type"</span><span class="p">,</span>
+     <span class="s2">"manufacturer"</span><span class="p">,</span>
+     <span class="s2">"plant"</span><span class="p">,</span>
+     <span class="s2">"series"</span><span class="p">],</span>
     <span class="n">as_index</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
 <span class="p">)[</span><span class="s2">"n_registrations"</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Aggregated rows before labels: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">final</span><span class="p">)</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
@@ -8224,7 +8281,7 @@ Name: series, dtype: int64
 </div>
 </div>
 <div class="jp-OutputArea-child jp-OutputArea-executeResult">
-<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[ ]:</div>
+<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[7]:</div>
 <div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/html" tabindex="0">
 <div>
 <style scoped="">
@@ -8340,7 +8397,7 @@ plant and series, with yearly registration counts.</p>
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [8]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="c1"># add labels and export a first version of the final CSV (all registrations)</span>
@@ -8349,7 +8406,8 @@ plant and series, with yearly registration counts.</p>
 <span class="c1"># stop if an unexpected component type appears</span>
 <span class="n">unknown</span> <span class="o">=</span> <span class="n">final</span><span class="p">[</span><span class="n">final</span><span class="p">[</span><span class="s2">"label"</span><span class="p">]</span><span class="o">.</span><span class="n">isna</span><span class="p">()]</span>
 <span class="k">if</span> <span class="ow">not</span> <span class="n">unknown</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
-    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Unlabelled component types: </span><span class="si">{</span><span class="n">unknown</span><span class="p">[</span><span class="s1">'component_type'</span><span class="p">]</span><span class="o">.</span><span class="n">unique</span><span class="p">()</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">"Unlabelled component types: </span><span class="si">{</span><span class="n">unknown</span><span class="p">[</span><span class="s1">'component_type'</span><span class="p">]</span><span class="o">.</span><span class="n">unique</span><span class="p">()</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
 <span class="c1"># placeholder clean count (= all) until the defect pipeline fills it</span>
 <span class="k">if</span> <span class="s2">"n_registrations_clean"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">final</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
@@ -8375,7 +8433,7 @@ plant and series, with yearly registration counts.</p>
 </div>
 </div>
 <div class="jp-OutputArea-child jp-OutputArea-executeResult">
-<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[ ]:</div>
+<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[8]:</div>
 <div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/html" tabindex="0">
 <div>
 <style scoped="">
@@ -8591,10 +8649,10 @@ above are left out</li>
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [9]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="c1"># build defective vehicle IDs (defectiveness rule, after registration) and rewrite final CSV</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="c1"># build defective vehicle IDs (after registration) and rewrite final CSV</span>
 <span class="c1"># skip recompute if the ID list already exists from a previous run</span>
 <span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span> <span class="nn">rebuild_final_with_defects</span> <span class="kn">import</span> <span class="n">rebuild_final_csv</span>
@@ -8637,7 +8695,7 @@ Totals — all: 12816416  clean: 2512736
 </div>
 </div>
 <div class="jp-OutputArea-child jp-OutputArea-executeResult">
-<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[ ]:</div>
+<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[9]:</div>
 <div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/html" tabindex="0">
 <div>
 <style scoped="">
@@ -8793,15 +8851,28 @@ ranking is stable (structural demand) or changes (fashion).</p>
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [10]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="c1"># shared helpers for both evaluation modes (without / with defects)</span>
 
 <span class="n">DATA_START_YEAR</span> <span class="o">=</span> <span class="mi">2009</span>
 <span class="n">DATA_END_YEAR</span> <span class="o">=</span> <span class="mi">2016</span>
-<span class="n">SERIES_START_MARKER</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">symbol</span><span class="o">=</span><span class="s2">"triangle-up"</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">"#1F7A4D"</span><span class="p">,</span> <span class="n">line</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">width</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">"#1F7A4D"</span><span class="p">))</span>
-<span class="n">SERIES_END_MARKER</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">symbol</span><span class="o">=</span><span class="s2">"x"</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">"#C0392B"</span><span class="p">,</span><span class="n">line</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">width</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">"#C0392B"</span><span class="p">))</span>
+<span class="n">SERIES_START_MARKER</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+    <span class="n">symbol</span><span class="o">=</span><span class="s2">"triangle-up"</span><span class="p">,</span>
+    <span class="n">size</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
+    <span class="n">color</span><span class="o">=</span><span class="s2">"#1F7A4D"</span><span class="p">,</span>
+    <span class="n">line</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
+        <span class="n">width</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="n">color</span><span class="o">=</span><span class="s2">"#1F7A4D"</span><span class="p">))</span>
+<span class="n">SERIES_END_MARKER</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+    <span class="n">symbol</span><span class="o">=</span><span class="s2">"x"</span><span class="p">,</span>
+    <span class="n">size</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span>
+    <span class="n">color</span><span class="o">=</span><span class="s2">"#C0392B"</span><span class="p">,</span>
+    <span class="n">line</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
+        <span class="n">width</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+        <span class="n">color</span><span class="o">=</span><span class="s2">"#C0392B"</span><span class="p">))</span>
+
 
 <span class="k">def</span> <span class="nf">rank_overall</span><span class="p">(</span><span class="n">count_col</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
     <span class="k">return</span> <span class="p">(</span>
@@ -8814,6 +8885,7 @@ ranking is stable (structural demand) or changes (fashion).</p>
         <span class="o">.</span><span class="n">sort_values</span><span class="p">([</span><span class="s2">"category"</span><span class="p">,</span> <span class="s2">"n"</span><span class="p">],</span> <span class="n">ascending</span><span class="o">=</span><span class="p">[</span><span class="kc">True</span><span class="p">,</span> <span class="kc">False</span><span class="p">])</span>
     <span class="p">)</span>
 
+
 <span class="k">def</span> <span class="nf">pick_winners</span><span class="p">(</span><span class="n">overall</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
     <span class="n">rows</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">cat</span> <span class="ow">in</span> <span class="n">CATEGORIES</span><span class="p">:</span>
@@ -8821,6 +8893,7 @@ ranking is stable (structural demand) or changes (fashion).</p>
         <span class="n">top</span> <span class="o">=</span> <span class="n">sub</span><span class="p">[</span><span class="s2">"n"</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
         <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sub</span><span class="p">[</span><span class="n">sub</span><span class="p">[</span><span class="s2">"n"</span><span class="p">]</span> <span class="o">==</span> <span class="n">top</span><span class="p">])</span>
     <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">rows</span><span class="p">,</span> <span class="n">ignore_index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
 
 <span class="k">def</span> <span class="nf">bar_series</span><span class="p">(</span><span class="n">overall</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">category</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">title</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
     <span class="n">sub</span> <span class="o">=</span> <span class="n">overall</span><span class="p">[</span><span class="n">overall</span><span class="p">[</span><span class="s2">"category"</span><span class="p">]</span> <span class="o">==</span> <span class="n">category</span><span class="p">]</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="s2">"n"</span><span class="p">,</span> <span class="n">ascending</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
@@ -8845,6 +8918,7 @@ ranking is stable (structural demand) or changes (fashion).</p>
     <span class="p">)</span>
     <span class="k">return</span> <span class="n">fig</span>
 
+
 <span class="k">def</span> <span class="nf">bar_bodies</span><span class="p">(</span><span class="n">overall</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">title</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
     <span class="n">body</span> <span class="o">=</span> <span class="n">overall</span><span class="p">[</span><span class="n">overall</span><span class="p">[</span><span class="s2">"category"</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">([</span><span class="s2">"K4"</span><span class="p">,</span> <span class="s2">"K5"</span><span class="p">,</span> <span class="s2">"K6"</span><span class="p">,</span> <span class="s2">"K7"</span><span class="p">])]</span>
     <span class="n">fig</span> <span class="o">=</span> <span class="n">px</span><span class="o">.</span><span class="n">bar</span><span class="p">(</span>
@@ -8868,6 +8942,7 @@ ranking is stable (structural demand) or changes (fashion).</p>
     <span class="p">)</span>
     <span class="k">return</span> <span class="n">fig</span>
 
+
 <span class="k">def</span> <span class="nf">mark_series_span</span><span class="p">(</span><span class="n">fig</span><span class="p">,</span> <span class="n">yearly</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">):</span>
     <span class="n">first</span> <span class="o">=</span> <span class="n">yearly</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">yearly</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">"series"</span><span class="p">)[</span><span class="s2">"year"</span><span class="p">]</span><span class="o">.</span><span class="n">idxmin</span><span class="p">()]</span>
     <span class="n">started</span> <span class="o">=</span> <span class="n">first</span><span class="p">[</span><span class="n">first</span><span class="p">[</span><span class="s2">"year"</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">DATA_START_YEAR</span><span class="p">]</span>
@@ -8879,7 +8954,10 @@ ranking is stable (structural demand) or changes (fashion).</p>
             <span class="n">marker</span><span class="o">=</span><span class="n">SERIES_START_MARKER</span><span class="p">,</span>
             <span class="n">name</span><span class="o">=</span><span class="s2">"series start (first registration after 2009)"</span><span class="p">,</span>
             <span class="n">legendgroup</span><span class="o">=</span><span class="s2">"series_start"</span><span class="p">,</span>
-            <span class="n">hovertemplate</span><span class="o">=</span><span class="s2">"series start&lt;br&gt;year=%</span><span class="si">{x}</span><span class="s2">&lt;br&gt;registrations=%</span><span class="si">{y:,}</span><span class="s2">&lt;extra&gt;&lt;/extra&gt;"</span><span class="p">)</span>
+            <span class="n">hovertemplate</span><span class="o">=</span><span class="p">(</span>
+                <span class="s2">"series start&lt;br&gt;year=%</span><span class="si">{x}</span><span class="s2">&lt;br&gt;"</span>
+                <span class="s2">"registrations=%</span><span class="si">{y:,}</span><span class="s2">&lt;extra&gt;&lt;/extra&gt;"</span>
+            <span class="p">))</span>
 
     <span class="n">last</span> <span class="o">=</span> <span class="n">yearly</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">yearly</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">"series"</span><span class="p">)[</span><span class="s2">"year"</span><span class="p">]</span><span class="o">.</span><span class="n">idxmax</span><span class="p">()]</span>
     <span class="n">ended</span> <span class="o">=</span> <span class="n">last</span><span class="p">[</span><span class="n">last</span><span class="p">[</span><span class="s2">"year"</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">DATA_END_YEAR</span><span class="p">]</span>
@@ -8891,7 +8969,10 @@ ranking is stable (structural demand) or changes (fashion).</p>
             <span class="n">marker</span><span class="o">=</span><span class="n">SERIES_END_MARKER</span><span class="p">,</span>
             <span class="n">name</span><span class="o">=</span><span class="s2">"series end (last registration before 2016)"</span><span class="p">,</span>
             <span class="n">legendgroup</span><span class="o">=</span><span class="s2">"series_end"</span><span class="p">,</span>
-            <span class="n">hovertemplate</span><span class="o">=</span><span class="s2">"series end&lt;br&gt;year=%</span><span class="si">{x}</span><span class="s2">&lt;br&gt;registrations=%</span><span class="si">{y:,}</span><span class="s2">&lt;extra&gt;&lt;/extra&gt;"</span><span class="p">,</span>
+            <span class="n">hovertemplate</span><span class="o">=</span><span class="p">(</span>
+                <span class="s2">"series end&lt;br&gt;year=%</span><span class="si">{x}</span><span class="s2">&lt;br&gt;"</span>
+                <span class="s2">"registrations=%</span><span class="si">{y:,}</span><span class="s2">&lt;extra&gt;&lt;/extra&gt;"</span>
+            <span class="p">),</span>
         <span class="p">)</span>
     <span class="k">return</span> <span class="n">fig</span>
 
@@ -8926,6 +9007,7 @@ ranking is stable (structural demand) or changes (fashion).</p>
     <span class="p">)</span>
     <span class="k">return</span> <span class="n">mark_series_span</span><span class="p">(</span><span class="n">fig</span><span class="p">,</span> <span class="n">yearly</span><span class="p">)</span>
 
+
 <span class="k">def</span> <span class="nf">body_trend_chart</span><span class="p">(</span><span class="n">count_col</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">title</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
     <span class="n">yearly</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">final</span><span class="p">[</span><span class="n">final</span><span class="p">[</span><span class="s2">"category"</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">([</span><span class="s2">"K4"</span><span class="p">,</span> <span class="s2">"K5"</span><span class="p">,</span> <span class="s2">"K6"</span><span class="p">,</span> <span class="s2">"K7"</span><span class="p">])]</span>
@@ -8956,6 +9038,7 @@ ranking is stable (structural demand) or changes (fashion).</p>
     <span class="p">)</span>
     <span class="k">return</span> <span class="n">mark_series_span</span><span class="p">(</span><span class="n">fig</span><span class="p">,</span> <span class="n">yearly</span><span class="p">)</span>
 
+
 <span class="k">def</span> <span class="nf">run_evaluation</span><span class="p">(</span><span class="n">count_col</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">mode_label</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Winners table + bar charts + yearly trends for one counting mode."""</span>
     <span class="n">overall</span> <span class="o">=</span> <span class="n">rank_overall</span><span class="p">(</span><span class="n">count_col</span><span class="p">)</span>
@@ -8982,6 +9065,7 @@ ranking is stable (structural demand) or changes (fashion).</p>
         <span class="p">)</span>
     <span class="p">)</span>
     <span class="k">return</span> <span class="n">overall</span><span class="p">,</span> <span class="n">winners</span>
+
 
 <span class="nb">print</span><span class="p">(</span><span class="s2">"Helpers ready for sections 4.1 and 4.2."</span><span class="p">)</span>
 </pre></div>
@@ -9018,11 +9102,12 @@ ranking is stable (structural demand) or changes (fashion).</p>
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [11]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="c1"># 4.1 — evaluation and graphs WITHOUT defects (all registrations)</span>
-<span class="n">overall_all</span><span class="p">,</span> <span class="n">winners_all</span> <span class="o">=</span> <span class="n">run_evaluation</span><span class="p">(</span><span class="s2">"n_registrations"</span><span class="p">,</span> <span class="s2">"without defects (all registrations)"</span><span class="p">)</span>
+<span class="n">overall_all</span><span class="p">,</span> <span class="n">winners_all</span> <span class="o">=</span> <span class="n">run_evaluation</span><span class="p">(</span>
+    <span class="s2">"n_registrations"</span><span class="p">,</span> <span class="s2">"without defects (all registrations)"</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -9226,11 +9311,12 @@ only). This can break ties and change the recommended series.</p>
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [12]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="c1"># 4.2 — evaluation and graphs WITH defective vehicles excluded</span>
-<span class="n">overall_clean</span><span class="p">,</span> <span class="n">winners_clean</span> <span class="o">=</span> <span class="n">run_evaluation</span><span class="p">(</span><span class="s2">"n_registrations_clean"</span><span class="p">,</span> <span class="s2">"with defective vehicles excluded"</span><span class="p">)</span>
+<span class="n">overall_clean</span><span class="p">,</span> <span class="n">winners_clean</span> <span class="o">=</span> <span class="n">run_evaluation</span><span class="p">(</span>
+    <span class="s2">"n_registrations_clean"</span><span class="p">,</span> <span class="s2">"with defective vehicles excluded"</span><span class="p">)</span>
 
 <span class="c1"># where the winner set differs between the two modes</span>
 <span class="n">cmp</span> <span class="o">=</span> <span class="n">winners_all</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span>
