@@ -11,13 +11,8 @@ from pathlib import Path
 
 import pandas as pd
 
-from defect_pipeline import (
-    BOM_FILES,
-    DATA_DIR,
-    DEFECT_IDS_PATH,
-    build_defective_vehicle_ids,
-    load_defective_vehicle_ids,
-)
+from defect_pipeline import (BOM_FILES, DATA_DIR, DEFECT_IDS_PATH,
+    build_defective_vehicle_ids, load_defective_vehicle_ids)
 
 FINAL_CSV = DATA_DIR / "SoSe26_Case_Study_finalData_Group_38.csv"
 
@@ -37,23 +32,15 @@ TYPE_LABEL = {
     "K4": "Body (OEM1 Typ11)",
     "K5": "Body (OEM1 Typ12)",
     "K6": "Body (OEM2 Typ21)",
-    "K7": "Body (OEM2 Typ22)",
+    "K7": "Body (OEM2 Typ22)"
 }
 
-BOM_META = [
-    ("Fahrzeug/Bestandteile_Fahrzeuge_OEM1_Typ11.csv", "OEM1", "Typ11"),
+BOM_META = [("Fahrzeug/Bestandteile_Fahrzeuge_OEM1_Typ11.csv", "OEM1", "Typ11"),
     ("Fahrzeug/Bestandteile_Fahrzeuge_OEM1_Typ12.csv", "OEM1", "Typ12"),
     ("Fahrzeug/Bestandteile_Fahrzeuge_OEM2_Typ21.csv", "OEM2", "Typ21"),
-    ("Fahrzeug/Bestandteile_Fahrzeuge_OEM2_Typ22.csv", "OEM2", "Typ22"),
-]
+    ("Fahrzeug/Bestandteile_Fahrzeuge_OEM2_Typ22.csv", "OEM2", "Typ22")]
 
-SLOTS = [
-    ("ID_Motor", "K1"),
-    ("ID_Sitze", "K2"),
-    ("ID_Schaltung", "K3"),
-    ("ID_Karosserie", "body"),
-]
-
+SLOTS = [("ID_Motor", "K1"),("ID_Sitze", "K2"),("ID_Schaltung", "K3"),("ID_Karosserie", "body")]
 
 def parse_component_id(series: pd.Series) -> pd.DataFrame:
     parts = series.astype(str).str.split("-", n=3, expand=True)
@@ -66,7 +53,6 @@ def parse_component_id(series: pd.Series) -> pd.DataFrame:
     )
     out["series"] = out["component_type"] + "-" + out["manufacturer"] + "-" + out["plant"]
     return out
-
 
 def rebuild_final_csv(defective: set[str] | None = None) -> pd.DataFrame:
     if defective is None:
@@ -143,13 +129,11 @@ def rebuild_final_csv(defective: set[str] | None = None) -> pd.DataFrame:
             "component_type",
             "manufacturer",
             "plant",
-            "series",
+            "series"
         ],
-        as_index=False,
-    ).agg(
+        as_index=False,).agg(
         n_registrations=("n_registrations", "sum"),
-        n_registrations_clean=("n_registrations_clean", "sum"),
-    )
+        n_registrations_clean=("n_registrations_clean", "sum"))
     final["n_registrations_clean"] = final["n_registrations_clean"].astype(int)
     final["label"] = final["component_type"].map(TYPE_LABEL)
     unknown = final[final["label"].isna()]
@@ -159,7 +143,6 @@ def rebuild_final_csv(defective: set[str] | None = None) -> pd.DataFrame:
     final.to_csv(FINAL_CSV, index=False)
     print(f"Wrote {FINAL_CSV} ({len(final)} rows)", flush=True)
     return final
-
 
 if __name__ == "__main__":
     import argparse
