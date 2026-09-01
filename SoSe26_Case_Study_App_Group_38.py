@@ -22,7 +22,6 @@ from typing import Optional
 import pandas as pd
 import plotly.express as px
 import streamlit as st
-import streamlit.components.v1 as components
 from PIL import Image, ImageDraw, ImageFont
 
 DATA_PATH = Path("Data") / "SoSe26_Case_Study_finalData_Group_38.csv"
@@ -206,6 +205,11 @@ def render_page_header(logo_file: Path) -> None:
     )
 
 
+def section_intro(text: str) -> None:
+    """Render a darker intro line under tab section headings."""
+    st.markdown(f'<div class="ida-section-intro">{text}</div>', unsafe_allow_html=True)
+
+
 def render_sidebar_settings_summary(
     registration_basis: str,
     period_mode: str,
@@ -214,10 +218,22 @@ def render_sidebar_settings_summary(
     st.sidebar.header("Current analysis settings")
     st.sidebar.markdown(
         f"""
-**Registration basis:** {registration_basis}
-**Analysis period:** {period_mode}
-**Years in analysis:** {analysis_period_label}
-"""
+<div class="ida-sidebar-settings">
+  <div class="ida-sidebar-settings__item">
+    <span class="ida-sidebar-settings__label">Registration basis</span>
+    <span class="ida-sidebar-settings__value">{registration_basis}</span>
+  </div>
+  <div class="ida-sidebar-settings__item">
+    <span class="ida-sidebar-settings__label">Analysis period</span>
+    <span class="ida-sidebar-settings__value">{period_mode}</span>
+  </div>
+  <div class="ida-sidebar-settings__item">
+    <span class="ida-sidebar-settings__label">Years in analysis</span>
+    <span class="ida-sidebar-settings__value">{analysis_period_label}</span>
+  </div>
+</div>
+""",
+        unsafe_allow_html=True,
     )
     st.sidebar.divider()
 
@@ -262,42 +278,157 @@ def active_count_col(exclude_defective: bool) -> str:
     return COUNT_CLEAN if exclude_defective else COUNT_ALL
 
 
-def methodology_text(
+def methodology_html(
     analysis_period_label: str,
     registration_basis: str,
 ) -> str:
     return f"""
-**Popularity metric**
-We count how many **registered vehicles** contain each component **series**
-(type + manufacturer + plant), summed over the selected analysis period
-(**{analysis_period_label}**) and registration basis (**{registration_basis}**).
+<div class="ida-glossary">
+  <div class="ida-glossary__entry">
+    <p class="ida-glossary__term">Popularity metric</p>
+    <p class="ida-glossary__def">
+      We count how many <strong>registered vehicles</strong> contain each
+      component <strong>series</strong> (type + manufacturer + plant), summed
+      over the selected analysis period
+      (<strong>{analysis_period_label}</strong>) and registration basis
+      (<strong>{registration_basis}</strong>).
+    </p>
+  </div>
+  <div class="ida-glossary__entry">
+    <p class="ida-glossary__term">
+      Four recommendation pools (not seven separate winners)
+    </p>
+    <table class="ida-glossary__table">
+      <thead>
+        <tr>
+          <th>Pool</th>
+          <th>Categories</th>
+          <th>Rule</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Engine</td>
+          <td>K1 only</td>
+          <td>Highest registration volume within K1</td>
+        </tr>
+        <tr>
+          <td>Seats</td>
+          <td>K2 only</td>
+          <td>Highest registration volume within K2</td>
+        </tr>
+        <tr>
+          <td>Gearbox</td>
+          <td>K3 only</td>
+          <td>Highest registration volume within K3</td>
+        </tr>
+        <tr>
+          <td>Body</td>
+          <td><strong>K4 + K5 + K6 + K7 together</strong></td>
+          <td>Top volume across all body series</td>
+        </tr>
+      </tbody>
+    </table>
+    <p class="ida-glossary__def">
+      K4–K7 are different <strong>body categories</strong>, but a vehicle needs
+      <strong>one body choice</strong>. Therefore we compare every body series
+      from K4–K7 in a <strong>single ranking</strong> and recommend the overall
+      body leader — not one winner per K4, K5, K6, and K7.
+    </p>
+  </div>
+  <div class="ida-glossary__entry">
+    <p class="ida-glossary__term">Most popular vehicle</p>
+    <p class="ida-glossary__def">
+      Top engine + top seats + top gearbox + top body (four independent choices
+      by registration volume).
+    </p>
+  </div>
+  <div class="ida-glossary__entry">
+    <p class="ida-glossary__term">Ties</p>
+    <p class="ida-glossary__def">
+      If two or more series share the highest count in a pool, all are shown as
+      co-leaders (same rank).
+    </p>
+  </div>
+  <div class="ida-glossary__entry">
+    <p class="ida-glossary__term">Trends tab</p>
+    <p class="ida-glossary__def">
+      Yearly charts always use the <strong>full dataset period</strong> so
+      long-term fashions remain visible. Rankings above respect the
+      analysis-period filter selected above.
+    </p>
+  </div>
+</div>
+"""
 
-**Four recommendation pools (not seven separate winners)**
-| Pool | Categories | Rule |
-|------|------------|------|
-| Engine | K1 only | Highest registration volume within K1 |
-| Seats | K2 only | Highest registration volume within K2 |
-| Gearbox | K3 only | Highest registration volume within K3 |
-| Body | **K4 + K5 + K6 + K7 together** | Top volume across all body series |
 
-K4–K7 are different **body categories**, but a vehicle needs **one body choice**.
-Therefore we compare every body series from K4–K7 in a **single ranking**
-and recommend the overall body leader — not one winner per K4, K5, K6, and K7.
-
-**Most popular vehicle** = top engine + top seats + top gearbox + top body
-(four independent choices by registration volume).
-
-**Ties**
-If two or more series share the highest count in a pool, all are shown as
-co-leaders (same rank).
-
-**Trends tab**
-Yearly charts always use the **full dataset period** so long-term fashions
-remain visible. Rankings above respect the analysis-period filter selected above.
-
-**Not validated**
-We do not check whether the four recommended components can be built together
-on one real vehicle.
+GLOSSARY_HTML = """
+<div class="ida-glossary">
+  <div class="ida-glossary__entry">
+    <p class="ida-glossary__term">Series</p>
+    <p class="ida-glossary__def">
+      Component type + manufacturer + plant (e.g. K1BE1-104-1041).
+    </p>
+  </div>
+  <div class="ida-glossary__entry">
+    <p class="ida-glossary__term">Registration volume</p>
+    <p class="ida-glossary__def">
+      Number of registered vehicles containing that series.
+    </p>
+  </div>
+  <div class="ida-glossary__entry">
+    <p class="ida-glossary__term">Defective vehicle</p>
+    <p class="ida-glossary__def">
+      A vehicle is classified as defective if the vehicle itself, an installed
+      component, or an installed single part is marked defective. A defective
+      single part also makes its component defective. Only defects occurring
+      after registration are considered. Pre-registration defects are treated
+      as production issues and ignored for this registration-based analysis.
+    </p>
+  </div>
+  <div class="ida-glossary__entry">
+    <p class="ida-glossary__term">Defect-filtered registrations</p>
+    <p class="ida-glossary__def">
+      Registration counts after excluding defective vehicles
+      (see <em>Defective vehicle</em>).
+    </p>
+  </div>
+  <div class="ida-glossary__entry">
+    <p class="ida-glossary__term">First / last observed registration</p>
+    <p class="ida-glossary__def">
+      First or last year a series appears in the data — not necessarily
+      production start/end.
+    </p>
+  </div>
+  <div class="ida-glossary__entry">
+    <p class="ida-glossary__term">Lifecycle check</p>
+    <p class="ida-glossary__def">
+      For each of the four recommended slots (engine, seats, gearbox, body),
+      we check whether at least one leading series from the selected analysis
+      period still has registrations in the latest year of the full dataset.
+      If a leader is no longer observed there, the recommendation may reflect
+      a historically popular series that is no longer present at the end of
+      the data.
+    </p>
+  </div>
+  <div class="ida-glossary__entry">
+    <p class="ida-glossary__term">Export recommendation</p>
+    <p class="ida-glossary__def">
+      Below the Recommended vehicle card you can download the current result:
+    </p>
+    <ul class="ida-glossary__list">
+      <li>
+        <strong>Excel</strong> — table of recommended slots (series, market
+        share, analysis period, registration basis, vehicle registrations).
+        Tied leaders appear as separate rows.
+      </li>
+      <li>
+        <strong>JPEG</strong> — image of the Recommended vehicle card for
+        slides or reports.
+      </li>
+    </ul>
+  </div>
+</div>
 """
 
 
@@ -818,16 +949,10 @@ def render_recommendation_hero(
             "</p>"
         )
 
-    hero_height = 248 if exclude_defective else 218
-
-    # Render as an HTML component so Streamlit markdown cannot break nested tags.
-    components.html(
+    # st.html keeps full card height when the slot grid wraps on narrow layouts.
+    st.html(
         f"""
         <style>
-          html, body {{
-            margin: 0;
-            padding: 0;
-          }}
           .rec-hero {{
             background: {BRAND_BLUE_SOFT};
             border-left: 4px solid {BRAND_BLUE};
@@ -847,7 +972,7 @@ def render_recommendation_hero(
           .rec-period {{
             color: {BRAND_MUTED};
             font-size: 0.9rem;
-            margin: 0 0 0.45rem;
+            margin: 0 0 1.25rem;
           }}
           .rec-filter {{
             color: {BRAND_WARN};
@@ -859,6 +984,7 @@ def render_recommendation_hero(
             display: grid;
             gap: 0.85rem 1.25rem;
             grid-template-columns: repeat(4, minmax(0, 1fr));
+            margin-top: 0.15rem;
           }}
           .slot-label {{
             color: {BRAND_MUTED};
@@ -926,8 +1052,6 @@ def render_recommendation_hero(
           </div>
         </div>
         """,
-        height=hero_height,
-        scrolling=False,
     )
 
     export_df = build_recommendation_export(
@@ -1494,45 +1618,13 @@ def main() -> None:
     render_sidebar_settings_summary(mode, period_mode, analysis_period_label)
 
     with st.sidebar.expander("How we calculate popularity and the recommendation"):
-        st.markdown(methodology_text(analysis_period_label, mode))
+        st.markdown(
+            methodology_html(analysis_period_label, mode),
+            unsafe_allow_html=True,
+        )
 
     with st.sidebar.expander("Glossary"):
-        st.markdown(
-            """
-**Series**
-Component type + manufacturer + plant (e.g. K1BE1-104-1041).
-
-**Registration volume**
-Number of registered vehicles containing that series.
-
-**Defective vehicle**
-A vehicle is classified as defective if the vehicle itself, an installed
-component, or an installed single part is marked defective. A defective
-single part also makes its component defective. Only defects occurring
-after registration are considered. Pre-registration defects are treated
-as production issues and ignored for this registration-based analysis.
-
-**Defect-filtered registrations**
-Registration counts after excluding defective vehicles
-(see *Defective vehicle*).
-
-**First / last observed registration**
-First or last year a series appears in the data — not necessarily production start/end.
-
-**Lifecycle check**
-For each of the four recommended slots (engine, seats, gearbox, body), we check
-whether at least one leading series from the selected analysis period still has
-registrations in the latest year of the full dataset. If a leader is no longer
-observed there, the recommendation may reflect a historically popular series
-that is no longer present at the end of the data.
-
-**Export recommendation**
-Below the Recommended vehicle card you can download the current result:
-- **Excel** — table of recommended slots (series, market share, analysis period,
-  registration basis, vehicle registrations). Tied leaders appear as separate rows.
-- **JPEG** — image of the Recommended vehicle card for slides or reports.
-"""
-        )
+        st.markdown(GLOSSARY_HTML, unsafe_allow_html=True)
 
     overall = overall_counts(
         analysis_df,
@@ -1660,7 +1752,7 @@ Below the Recommended vehicle card you can download the current result:
 
     with tab_rec:
         st.subheader("Top component recommendations")
-        st.caption(
+        section_intro(
             "This page shows the ranking detail behind the recommended vehicle: "
             "leaders and runners-up by registration volume for engine, seats, "
             "gearbox, and body. Use the category tabs for tables and KPIs; the "
@@ -1973,11 +2065,12 @@ Below the Recommended vehicle card you can download the current result:
 
     with tab_trend:
         st.subheader("Trends and fashions by year")
-        st.caption(
-            "Trends use the **full registration period** (not the analysis-period "
-            "filter above). A stable yearly winner suggests structural demand; a "
-            "changing winner suggests fashion. Green ▲ = first observed registration; "
-            "red × = last observed registration (not necessarily production dates)."
+        section_intro(
+            "Trends use the <strong>full registration period</strong> (not the "
+            "analysis-period filter above). A stable yearly winner suggests "
+            "structural demand; a changing winner suggests fashion. Green ▲ = first "
+            "observed registration; red × = last observed registration (not "
+            "necessarily production dates)."
         )
         trend_metric = st.radio(
             "Display metric",
@@ -2026,7 +2119,7 @@ Below the Recommended vehicle card you can download the current result:
 
     with tab_explore:
         st.subheader("Filter the registration counts")
-        st.caption(
+        section_intro(
             "Explore the underlying registration data with your own filters. "
             "Choose years, OEMs, and categories to rebuild the bar chart and table. "
             "Counts follow the current Registration basis selected above "
@@ -2108,13 +2201,13 @@ Below the Recommended vehicle card you can download the current result:
 
     with tab_table:
         st.subheader("Final dataset (all rows)")
-        st.caption(
+        section_intro(
             "Audit view of the complete final dataset used by this app "
-            f"(`{DATA_PATH}` · {len(df):,} rows). "
+            f"(<code>{DATA_PATH}</code> · {len(df):,} rows). "
             "Every chart and recommendation above is built only from these rows. "
-            "**Registrations** = all registered vehicles; "
-            "**Registrations (defect-filtered)** = excluding defective vehicles "
-            "(after registration — see Glossary)."
+            "<strong>Registrations</strong> = all registered vehicles; "
+            "<strong>Registrations (defect-filtered)</strong> = excluding defective "
+            "vehicles (after registration — see Glossary)."
         )
 
         full_display = df.rename(

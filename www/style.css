@@ -28,6 +28,7 @@
   --ida-fs-body: 1rem;        /* 16px */
   --ida-fs-caption: 0.9rem;   /* ~14px */
   --ida-fs-label: 0.75rem;    /* ~12px eyebrows */
+  --ida-sidebar-min: 18rem;   /* ~288px — keeps methodology table readable */
 }
 
 html, body, [data-testid="stAppViewContainer"] {
@@ -45,16 +46,141 @@ html, body, [data-testid="stAppViewContainer"] {
 }
 
 [data-testid="stSidebar"][aria-expanded="true"] {
-  min-width: 280px;
+  min-width: var(--ida-sidebar-min) !important;
 }
 
-[data-testid="stSidebar"][aria-expanded="false"] {
-  min-width: 0;
+[data-testid="stSidebar"][aria-expanded="true"] > div:first-child {
+  min-width: var(--ida-sidebar-min);
 }
 
-[data-testid="stSidebar"][aria-expanded="false"] > div:first-child {
-  margin-left: -280px;
-  width: 280px;
+[data-testid="stSidebar"] > div:first-child,
+[data-testid="stSidebar"] [data-testid="stVerticalBlock"],
+[data-testid="stSidebar"] [data-testid="stMarkdownContainer"],
+[data-testid="stSidebar"] [data-testid="stExpanderDetails"] {
+  max-width: 100%;
+  width: 100%;
+}
+
+.ida-sidebar-settings {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  margin: 0.15rem 0 0.35rem;
+  width: 100%;
+}
+
+.ida-sidebar-settings__item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.ida-sidebar-settings__label {
+  color: var(--ida-blue-dark);
+  font-size: var(--ida-fs-caption);
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.ida-sidebar-settings__value {
+  color: var(--ida-text);
+  font-size: var(--ida-fs-body);
+  line-height: 1.35;
+  overflow-wrap: break-word;
+}
+
+[data-testid="stSidebar"] [data-testid="stExpanderDetails"] p,
+[data-testid="stSidebar"] [data-testid="stExpanderDetails"] li {
+  color: var(--ida-text) !important;
+  font-size: var(--ida-fs-caption) !important;
+  line-height: 1.45 !important;
+  overflow-wrap: break-word;
+}
+
+/* Methodology table in sidebar expanders */
+[data-testid="stSidebar"] [data-testid="stExpanderDetails"] table {
+  border-collapse: collapse;
+  display: table;
+  margin: 0.35rem 0 0.65rem;
+  table-layout: auto;
+  width: 100%;
+}
+
+[data-testid="stSidebar"] [data-testid="stExpanderDetails"] th,
+[data-testid="stSidebar"] [data-testid="stExpanderDetails"] td {
+  color: var(--ida-text) !important;
+  font-size: var(--ida-fs-caption) !important;
+  hyphens: none;
+  line-height: 1.35 !important;
+  overflow-wrap: normal;
+  padding: 0.35rem 0.45rem;
+  vertical-align: top;
+  white-space: normal;
+  word-break: normal;
+}
+
+[data-testid="stSidebar"] [data-testid="stExpanderDetails"] th {
+  color: var(--ida-blue-dark) !important;
+  font-weight: 600;
+}
+
+.ida-glossary__entry {
+  margin-bottom: 0.85rem;
+}
+
+.ida-glossary__entry:last-child {
+  margin-bottom: 0;
+}
+
+.ida-glossary__term {
+  color: var(--ida-blue-dark);
+  font-size: var(--ida-fs-caption);
+  font-weight: 600;
+  line-height: 1.3;
+  margin: 0 0 0.2rem;
+}
+
+.ida-glossary__def,
+.ida-glossary__list {
+  color: var(--ida-text);
+  font-size: var(--ida-fs-caption);
+  line-height: 1.45;
+  margin: 0;
+}
+
+.ida-glossary__list {
+  margin-top: 0.35rem;
+  padding-left: 1.1rem;
+}
+
+.ida-glossary__list li {
+  margin-bottom: 0.35rem;
+}
+
+.ida-glossary__list li:last-child {
+  margin-bottom: 0;
+}
+
+.ida-glossary__table {
+  border-collapse: collapse;
+  margin: 0.35rem 0 0.55rem;
+  table-layout: auto;
+  width: 100%;
+}
+
+.ida-glossary__table th,
+.ida-glossary__table td {
+  color: var(--ida-text);
+  font-size: var(--ida-fs-caption);
+  line-height: 1.35;
+  padding: 0.35rem 0.45rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+.ida-glossary__table th {
+  color: var(--ida-blue-dark);
+  font-weight: 600;
 }
 
 .material-symbols-rounded {
@@ -90,6 +216,16 @@ small {
   color: var(--ida-muted) !important;
   font-size: var(--ida-fs-caption) !important;
   line-height: 1.4 !important;
+}
+
+/* Tab section intros (Recommendation, Trends, Explore, Full data) */
+.ida-section-intro,
+.ida-section-intro p {
+  color: var(--ida-text) !important;
+  font-size: var(--ida-fs-caption) !important;
+  line-height: 1.5 !important;
+  margin: -0.2rem 0 0.85rem !important;
+  max-width: 72ch;
 }
 
 div[data-testid="stMetricLabel"],

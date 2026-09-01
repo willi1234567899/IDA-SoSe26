@@ -32,8 +32,9 @@ cp "${REPO_ROOT}/.streamlit/config.toml" "${STAGE}/.streamlit/"
 # --- Data: final CSV only (no tubCloud originals, no intermediate cache) ---
 cp "${REPO_ROOT}/Data/SoSe26_Case_Study_finalData_Group_${GROUP}.csv" "${STAGE}/Data/"
 
-# --- Additional_files: screenshots ---
+# --- Additional_files: screenshots + user guide ---
 cp "${REPO_ROOT}/Additional_files/"*.png "${STAGE}/Additional_files/" 2>/dev/null || true
+cp "${REPO_ROOT}/Additional_files/"*.md "${STAGE}/Additional_files/" 2>/dev/null || true
 
 # --- www: app static assets ---
 cp "${REPO_ROOT}/www/style.css" "${STAGE}/www/"

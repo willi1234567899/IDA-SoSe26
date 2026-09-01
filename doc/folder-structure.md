@@ -30,6 +30,7 @@ Upload **one zip** to ISIS before **1 September 2026, 23:59**.
 
 ### `Additional_files/`
 - App screenshots (`01`–`05_*.png`).
+- `Dashboard_User_Guide.md` — dashboard user guide for examiners.
 - Other extras that do not belong elsewhere.
 
 ### `www/`
@@ -64,7 +65,8 @@ SoSe26_Case_Study_Group_38/
 │   ├── 02_recommendation_tab.png
 │   ├── 03_yearly_trends.png
 │   ├── 04_explore_tab.png
-│   └── 05_full_data_tab.png
+│   ├── 05_full_data_tab.png
+│   └── Dashboard_User_Guide.md
 ├── Data/
 │   └── SoSe26_Case_Study_finalData_Group_38.csv
 ├── www/
@@ -108,7 +110,7 @@ Creates `../SoSe26_Case_Study_Group_38.zip` with the tree above.
 - [x] General Tasks `.html` exported
 - [x] Case Study analysis + Document results + screenshots
 - [x] Case Study `.html` exported (not a placeholder)
-- [ ] Optional: **Run All** both notebooks once more, then re-export HTML
+- [x] Optional: **Run All** both notebooks once more, then re-export HTML
 
 ### App
 - [x] Streamlit app runs on final CSV only
@@ -119,5 +121,5 @@ Creates `../SoSe26_Case_Study_Group_38.zip` with the tree above.
 - [x] Final CSV in `Data/`
 - [x] Intermediate defect cache moved to `local/` (not in `Data/`)
 - [x] Defect helper scripts at repo root (included in zip)
-- [ ] Run `bash scripts/build_submission_zip.sh` and test unzip on another folder
+- [x] Run `bash scripts/build_submission_zip.sh` and test unzip on another folder
 - [ ] Upload zip to ISIS before deadline
