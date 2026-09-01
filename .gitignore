@@ -209,6 +209,9 @@ tempCodeRunnerFile.py
 # PyPI configuration file
 .pypirc
 
+# macOS
+.DS_Store
+
 # Marimo
 marimo/_static/
 marimo/_lsp/
@@ -218,7 +221,7 @@ __marimo__/
 .streamlit/secrets.toml
 
 # --- PRIVATE: datasets & course materials (never push) ---
-# keep empty folder placeholders under Data/
+# Data/: keep folder placeholder only — no tubCloud originals or CSVs in git
 Data/**
 !Data/**/
 !Data/**/.gitkeep
@@ -226,14 +229,21 @@ data/**
 !data/**/
 !data/**/.gitkeep
 
+# Submission screenshots (track PNGs; ignore other extras)
 Additional_files/**
 !Additional_files/**/
 !Additional_files/**/.gitkeep
+!Additional_files/*.png
 
+# App assets (track CSS, fonts, logos; ignore other www junk)
 www/**
 !www/**/
 !www/**/.gitkeep
+!www/style.css
+!www/fonts/**
+!www/img/**
 
+# Raw datasets / exports (final CSV ships in submission zip, not git)
 *.csv
 *.parquet
 *.feather
