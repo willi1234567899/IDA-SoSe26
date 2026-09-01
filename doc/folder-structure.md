@@ -31,18 +31,17 @@ Upload **one zip** to ISIS before **1 September 2026, 23:59**.
 ### `Additional_files/`
 - App screenshots (`01`–`05_*.png`).
 - `Dashboard_User_Guide.md` — dashboard user guide for examiners.
+- `defect_pipeline.py` / `rebuild_final_with_defects.py` — defect logic for the Case Study notebook.
+- `requirements.txt` — dependencies for notebooks + app.
 - Other extras that do not belong elsewhere.
 
 ### `www/`
 - App static assets: `style.css`, `fonts/`, `img/` (logos).
 
-## Additional files to include (required to run / reproduce)
+## Required to run (not in Submission Requirements table)
 
 | File | Purpose |
 |------|---------|
-| `defect_pipeline.py` | Defect logic — imported by Case Study notebook |
-| `rebuild_final_with_defects.py` | Rebuilds final CSV with `n_registrations_clean` |
-| `requirements.txt` | Dependencies for notebooks + app |
 | `.streamlit/config.toml` | App theme (brand colours) |
 
 ## Local-only (do **not** submit)
@@ -66,7 +65,10 @@ SoSe26_Case_Study_Group_38/
 │   ├── 03_yearly_trends.png
 │   ├── 04_explore_tab.png
 │   ├── 05_full_data_tab.png
-│   └── Dashboard_User_Guide.md
+│   ├── Dashboard_User_Guide.md
+│   ├── defect_pipeline.py
+│   ├── rebuild_final_with_defects.py
+│   └── requirements.txt
 ├── Data/
 │   └── SoSe26_Case_Study_finalData_Group_38.csv
 ├── www/
@@ -75,9 +77,6 @@ SoSe26_Case_Study_Group_38/
 │   └── img/
 ├── .streamlit/
 │   └── config.toml
-├── defect_pipeline.py
-├── rebuild_final_with_defects.py
-├── requirements.txt
 ├── SoSe26_General_Tasks_Group_38.ipynb
 ├── SoSe26_General_Tasks_Group_38.html
 ├── SoSe26_Case_Study_Group_38.ipynb
@@ -120,6 +119,6 @@ Creates `../SoSe26_Case_Study_Group_38.zip` with the tree above.
 ### Data & zip
 - [x] Final CSV in `Data/`
 - [x] Intermediate defect cache moved to `local/` (not in `Data/`)
-- [x] Defect helper scripts at repo root (included in zip)
+- [x] Defect helper scripts in `Additional_files/` (included in zip)
 - [x] Run `bash scripts/build_submission_zip.sh` and test unzip on another folder
 - [ ] Upload zip to ISIS before deadline

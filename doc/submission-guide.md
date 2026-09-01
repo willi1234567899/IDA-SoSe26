@@ -14,9 +14,6 @@ Where everything goes in the ISIS zip and what examiners need.
 | `SoSe26_Case_Study_Group_38.ipynb` / `.html` | Analysis + Document results |
 | `SoSe26_Case_Study_App_Group_38.py` | Streamlit dashboard |
 | `Data/SoSe26_Case_Study_finalData_Group_38.csv` | **Only** file in `Data/` |
-| `defect_pipeline.py` | Notebook: defect vehicle IDs |
-| `rebuild_final_with_defects.py` | Notebook: rebuild final CSV |
-| `requirements.txt` | Dependencies |
 | `.streamlit/config.toml` | Theme |
 
 ## `Additional_files/`
@@ -28,6 +25,9 @@ fit other cases.”*
 |------|---------|
 | `01`–`05_*.png` | App screenshots (embedded in Case Study notebook) |
 | `Dashboard_User_Guide.md` | How to use the dashboard, KPIs, features |
+| `defect_pipeline.py` | Notebook: defect vehicle IDs |
+| `rebuild_final_with_defects.py` | Notebook: rebuild final CSV |
+| `requirements.txt` | Dependencies |
 
 **Not in zip:** `doc/` (local planning notes only).
 

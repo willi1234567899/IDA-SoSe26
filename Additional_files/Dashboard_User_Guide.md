@@ -15,7 +15,7 @@ From the submission folder `SoSe26_Case_Study_Group_38/`:
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate          # Windows: .venv\Scripts\activate
-pip install -r requirements.txt
+pip install -r Additional_files/requirements.txt
 streamlit run SoSe26_Case_Study_App_Group_38.py --server.fileWatcherType none
 ```
 

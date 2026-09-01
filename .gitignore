@@ -235,6 +235,8 @@ Additional_files/**
 !Additional_files/**/.gitkeep
 !Additional_files/*.png
 !Additional_files/*.md
+!Additional_files/*.py
+!Additional_files/requirements.txt
 
 # App assets (track CSS, fonts, logos; ignore other www junk)
 www/**

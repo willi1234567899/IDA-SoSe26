@@ -1,5 +1,5 @@
 # IDA Case Study – possible dependencies
-# Install: pip install -r requirements.txt
+# Install: pip install -r Additional_files/requirements.txt
 # Notebooks should also run under a current Anaconda setup
 
 # Data & analysis

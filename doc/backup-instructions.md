@@ -27,7 +27,7 @@ How to keep and restore the project after ISIS submission.
 unzip SoSe26_Case_Study_Group_38.zip
 cd SoSe26_Case_Study_Group_38
 python3 -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
+pip install -r Additional_files/requirements.txt
 streamlit run SoSe26_Case_Study_App_Group_38.py --server.fileWatcherType none
 ```
 
@@ -38,7 +38,7 @@ streamlit run SoSe26_Case_Study_App_Group_38.py --server.fileWatcherType none
 3. Link or copy tubCloud folders into `Data/`:
    `Einzelteil`, `Fahrzeug`, `Geodaten`, `Komponente`, `Logistikverzug`, `Zulassungen`
 4. Optional: copy `local/defective_vehicles_after_reg.csv` to skip long defect step.
-5. `pip install -r requirements.txt` → Run All notebooks.
+5. `pip install -r Additional_files/requirements.txt` → Run All notebooks.
 
 ## Rebuild submission zip
 

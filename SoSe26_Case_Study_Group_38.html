@@ -7573,10 +7573,16 @@ counts that exclude these defective vehicles.</p>
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="c1"># setup: suppress warnings, load libraries, define paths and labels</span>
 
+<span class="kn">import</span> <span class="nn">sys</span>
 <span class="kn">import</span> <span class="nn">warnings</span>
 <span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s2">"ignore"</span><span class="p">)</span>
 
 <span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+
+<span class="c1"># helper scripts for defect logic live in Additional_files/</span>
+<span class="n">ADDITIONAL_FILES_DIR</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="s2">"Additional_files"</span><span class="p">)</span>
+<span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">ADDITIONAL_FILES_DIR</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="p">:</span>
+    <span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">ADDITIONAL_FILES_DIR</span><span class="p">))</span>
 
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
 <span class="kn">import</span> <span class="nn">plotly.express</span> <span class="k">as</span> <span class="nn">px</span>
@@ -8699,8 +8705,17 @@ registration date. Earlier defects are ignored.</p>
 <li><code>n_registrations_clean</code> — same aggregation, but vehicles that fail the rule
 above are left out</li>
 </ul>
-<p>Heavy reads (Komponente + Einzelteil) live in <code>defect_pipeline.py</code> /
-<code>rebuild_final_with_defects.py</code> so this notebook stays readable.</p>
+<p>Heavy reads (Komponente + Einzelteil) live in
+<code>Additional_files/defect_pipeline.py</code> /
+<code>Additional_files/rebuild_final_with_defects.py</code> so this notebook stays readable.</p>
+<p><strong>Runtime note (for examiners)</strong></p>
+<p>The next code cell builds the defective-vehicle list from the full tubCloud
+data. On a <strong>first run</strong> this can take <strong>roughly 30–60 minutes</strong> (large BOM and
+Einzelteil joins). If <code>local/defective_vehicles_after_reg.csv</code> already exists
+from a previous run, the notebook reuses it and finishes in a few minutes. That
+cache is <strong>not</strong> part of the submission zip; examiners regenerate it when
+re-running the notebook from scratch. The Streamlit app does <strong>not</strong> need this
+step — it reads only the final CSV.</p>
 </div>
 </div>
 </div>
@@ -8714,13 +8729,16 @@ above are left out</li>
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="c1"># build defective vehicle IDs (after registration) and rewrite final CSV</span>
 <span class="c1"># skip recompute if the ID list already exists from a previous run</span>
-<span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span> <span class="nn">rebuild_final_with_defects</span> <span class="kn">import</span> <span class="n">rebuild_final_csv</span>
 <span class="kn">from</span> <span class="nn">defect_pipeline</span> <span class="kn">import</span> <span class="n">DEFECT_IDS_PATH</span><span class="p">,</span> <span class="n">build_defective_vehicle_ids</span>
 
 <span class="k">if</span> <span class="n">DEFECT_IDS_PATH</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Using existing </span><span class="si">{</span><span class="n">DEFECT_IDS_PATH</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 <span class="k">else</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span>
+        <span class="s2">"Building defective vehicle IDs from tubCloud data — "</span>
+        <span class="s2">"first run may take ~30–60 minutes."</span>
+    <span class="p">)</span>
     <span class="n">build_defective_vehicle_ids</span><span class="p">(</span><span class="n">save</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
 <span class="n">final</span> <span class="o">=</span> <span class="n">rebuild_final_csv</span><span class="p">()</span>
