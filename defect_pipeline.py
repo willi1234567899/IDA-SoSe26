@@ -13,7 +13,8 @@ from pathlib import Path
 import pandas as pd
 
 DATA_DIR = Path("Data")
-DEFECT_IDS_PATH = DATA_DIR / "defective_vehicles_after_reg.csv"
+LOCAL_DIR = Path("local")  # intermediate outputs — not submitted in Data/
+DEFECT_IDS_PATH = LOCAL_DIR / "defective_vehicles_after_reg.csv"
 
 BOM_FILES = [
     "Fahrzeug/Bestandteile_Fahrzeuge_OEM1_Typ11.csv",
@@ -538,6 +539,7 @@ def build_defective_vehicle_ids(save: bool = True) -> set[str]:
 
     print(f"DONE: {len(defective):,} defective vehicles (after registration)", flush=True)
     if save:
+        LOCAL_DIR.mkdir(parents=True, exist_ok=True)
         pd.Series(sorted(defective), name="ID_Fahrzeug").to_csv(DEFECT_IDS_PATH, index=False)
         print(f"wrote {DEFECT_IDS_PATH}", flush=True)
     return defective

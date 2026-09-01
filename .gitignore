@@ -245,6 +245,12 @@ www/**
 
 # Raw datasets / exports (final CSV ships in submission zip, not git)
 *.csv
+
+# Local intermediate outputs (defect cache, etc.)
+local/**
+!local/**/
+!local/.gitkeep
+!local/README.md
 *.parquet
 *.feather
 *.sqlite
